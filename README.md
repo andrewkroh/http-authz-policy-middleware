@@ -1,8 +1,8 @@
-# Traefik WASM Authorization Middleware Plugin
+# HTTP Authorization Policy Middleware
 
-[![CI](https://github.com/USER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/andrewkroh/http-authz-policy-middleware/actions/workflows/ci.yml/badge.svg)](https://github.com/andrewkroh/http-authz-policy-middleware/actions/workflows/ci.yml)
 
-A Traefik middleware plugin that performs attribute-based authorization on HTTP requests using a custom expression language.
+A Traefik middleware plugin that performs attribute-based authorization on HTTP requests using a type-safe expression language.
 
 ## Overview
 
@@ -14,11 +14,13 @@ This plugin enables fine-grained access control based on HTTP request attributes
 
 ## Features
 
-- **Expression-based authorization**: Define complex access rules using a simple expression language
-- **Type-safe compilation**: Expressions are compiled and type-checked at Traefik startup
-- **Built-in testing**: Test cases validated at startup - Traefik won't start with invalid config
-- **Minimal overhead**: Small WASM binary (< 200 KB) with fast evaluation
-- **Fail-closed security**: Any evaluation errors result in request denial
+- **Expression-based authorization**: Define complex access rules using a simple, powerful expression language
+- **Type-safe compilation**: Expressions are compiled and type-checked at Traefik startup - catch errors before they hit production
+- **Built-in testing framework**: Test cases validated at startup - Traefik won't start with invalid config
+- **Fail-closed security**: Any evaluation errors result in request denial (HTTP 500)
+- **Minimal overhead**: Compiled WASM binary (~960 KB) with fast runtime evaluation
+- **Case-insensitive headers**: All header lookups are case-insensitive for HTTP/1.1 and HTTP/2 compatibility
+- **Rich built-in functions**: Header access, array operations, regex matching, and more
 
 ## Quick Start
 
@@ -144,7 +146,64 @@ See `/workspace/docs/TASKS.md` for implementation progress tracking.
 
 ## Examples
 
-See `/workspace/examples/` directory for complete Traefik configuration examples.
+See the [`examples/`](examples/) directory for complete Traefik configuration examples:
+
+- **[team-based-access.yml](examples/team-based-access.yml)** - Control access based on team membership headers
+- **[path-restrictions.yml](examples/path-restrictions.yml)** - Restrict access to specific API paths
+- **[combined-rules.yml](examples/combined-rules.yml)** - Complex boolean logic combining multiple conditions
+
+## Troubleshooting
+
+### Expression Compilation Errors
+
+If Traefik fails to start with compilation errors, check:
+- Expression syntax is correct (operators, parentheses match)
+- All identifiers are valid (`method`, `path`, `host`)
+- Function names and argument counts are correct
+- Top-level expression evaluates to boolean
+
+### Test Failures at Startup
+
+When test cases fail:
+- Check that `expect` matches the actual expression result
+- Verify test request properties (method, path, host, headers)
+- Use simple expressions to isolate the issue
+- Check Traefik logs for detailed error messages
+
+### Runtime Evaluation Errors
+
+Evaluation errors return HTTP 500:
+- Usually caused by invalid regex patterns in `matches()` operator
+- Check Traefik logs for detailed error messages
+- All other type errors are caught at compile time
+
+### Header Access
+
+**Note**: Current WASM implementation has limited header access due to http-wasm-guest 0.7 API constraints. Header functions may not work as expected until this is enhanced.
+
+For full header support, expressions using `header()`, `headerValues()`, and `headerList()` should be tested with the built-in test framework.
+
+## Performance
+
+- Expression compilation happens once at Traefik startup
+- Runtime evaluation is fast (compiled AST, not interpreted)
+- Regex patterns in `matches()` are compiled on demand (consider caching optimization)
+- Boolean operators use short-circuit evaluation
+
+## Security
+
+- **Fail-closed**: Unexpected errors return HTTP 500, never allow unauthorized access
+- **Type safety**: Invalid expressions caught at compile time before any requests are processed
+- **RE2 regex**: Linear-time regex matching prevents ReDoS attacks
+- **No code injection**: Expressions are parsed into AST, not executed as code
+
+## Contributing
+
+Contributions welcome! Please:
+1. Run tests: `cargo test`
+2. Format code: `cargo fmt`
+3. Lint: `cargo clippy --target wasm32-wasip1`
+4. Ensure CI passes before submitting PR
 
 ## License
 
