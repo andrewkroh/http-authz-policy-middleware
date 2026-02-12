@@ -234,7 +234,30 @@ Integration tests validate the plugin in a real Traefik environment using Docker
 - Release build: `make release`
 - Docker and Docker Compose installed
 
-### Running Integration Tests
+### Running Integration Tests (Hardened Mode - Recommended)
+
+The recommended approach runs tests inside the Docker network for better security and isolation:
+
+```bash
+# From project root
+make release
+
+# Navigate to integration test directory
+cd integration-test
+
+# Run automated test script (builds container, runs tests, cleans up)
+./run-tests.sh
+```
+
+This approach provides:
+- **Network isolation** - Tests run inside Docker network
+- **No port binding** - Services communicate via internal service names
+- **Automatic cleanup** - Services shut down after tests complete
+- **Health checks** - Proper service startup coordination
+
+### Alternative: Legacy Mode (Tests From Host)
+
+For debugging or interactive testing, you can run tests from the host:
 
 ```bash
 # From project root
@@ -246,18 +269,17 @@ cd integration-test
 # Set up plugin directory structure
 ./setup-plugin.sh
 
-# Start Traefik container
-docker compose up -d
+# Start Traefik and backend (ports bound to 127.0.0.1 only)
+docker compose up -d traefik backend
 
-# Wait for Traefik to fully start (check logs)
-docker compose logs -f traefik
-
-# Run integration tests (in another terminal)
-./test.sh
+# Run integration tests from host
+TRAEFIK_URL=http://localhost:8080 ./test.sh
 
 # View results and clean up
 docker compose down
 ```
+
+Note: Ports are bound to 127.0.0.1 (not 0.0.0.0) for security.
 
 ### Integration Test Scenarios
 
@@ -273,7 +295,10 @@ The `test.sh` script validates:
 
 - **`traefik.yml`** - Static config with `experimental.localPlugins`
 - **`dynamic.yml`** - Middleware definitions with expressions and test cases
-- **`docker-compose.yml`** - Traefik container with plugin volume mount
+- **`docker-compose.yml`** - Services with health checks and test runner
+- **`Dockerfile.test`** - Test runner container with curl and bash
+- **`run-tests.sh`** - Automated test execution script (hardened mode)
+- **`test.sh`** - Test script (supports both hardened and legacy modes via TRAEFIK_URL)
 
 ### Plugin Directory Structure
 
@@ -294,15 +319,17 @@ The `setup-plugin.sh` script creates this structure automatically.
 ### Viewing Logs
 
 ```bash
-# Follow Traefik logs
+# Follow Traefik logs (while services are running)
 docker compose logs -f traefik
 
 # Check for plugin initialization messages
 docker compose logs traefik | grep -i plugin
 
-# Access Traefik dashboard
-open http://localhost:8081
+# Access Traefik dashboard (legacy mode only, when ports are exposed)
+open http://127.0.0.1:8081
 ```
+
+Note: Dashboard access requires running in legacy mode with port exposure.
 
 ## Code Quality
 
@@ -358,12 +385,20 @@ make check
 4. **Check code quality**: `make check`
 5. **Test in Traefik** (if needed):
    - `make release`
-   - `cd integration-test && ./setup-plugin.sh`
-   - `docker compose up -d`
-   - `./test.sh`
-   - `docker compose down`
+   - `cd integration-test`
+   - `./run-tests.sh` (hardened mode - recommended)
 6. **Format code**: `cargo fmt`
 7. **Commit changes**
+
+For interactive debugging, use legacy mode:
+```bash
+cd integration-test
+./setup-plugin.sh
+docker compose up -d traefik backend
+TRAEFIK_URL=http://localhost:8080 ./test.sh
+docker compose logs traefik  # View detailed logs
+docker compose down
+```
 
 ### Adding New Features
 

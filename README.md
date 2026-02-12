@@ -105,6 +105,15 @@ Complete Traefik configurations in [`examples/`](examples/):
 - [path-restrictions.yml](examples/path-restrictions.yml) - API path restrictions
 - [combined-rules.yml](examples/combined-rules.yml) - Complex boolean logic
 
+## Testing
+
+The plugin includes comprehensive testing:
+
+- **Unit tests** - Run with `cargo test`
+- **Integration tests** - Docker-based end-to-end validation with hardened security (tests run inside Docker network)
+
+See [integration-test/README.md](integration-test/README.md) for integration test details.
+
 ## Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** - Development workflow and contributor guide

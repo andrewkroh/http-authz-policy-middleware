@@ -79,52 +79,23 @@ jobs:
       - name: Build release WASM
         run: make release
 
-      - name: Set up plugin directory
+      - name: Run integration tests (hardened mode)
         run: |
           cd integration-test
-          ./setup-plugin.sh
-
-      - name: Start Docker Compose
-        run: |
-          cd integration-test
-          docker compose up -d
-
-      - name: Wait for Traefik
-        run: |
-          echo "Waiting for Traefik to start..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8080/ping > /dev/null 2>&1; then
-              echo "Traefik is ready"
-              break
-            fi
-            if [ $i -eq 30 ]; then
-              echo "Traefik did not start in time"
-              docker compose -f integration-test/docker-compose.yml logs traefik
-              exit 1
-            fi
-            sleep 2
-          done
-
-      - name: Run integration tests
-        run: |
-          cd integration-test
-          chmod +x test.sh
-          ./test.sh
-
-      - name: Show Traefik logs on success
-        if: success()
-        run: |
-          echo "=== Traefik Logs ==="
-          docker compose -f integration-test/docker-compose.yml logs traefik
+          chmod +x run-tests.sh
+          ./run-tests.sh
+        continue-on-error: false
 
       - name: Show Traefik logs on failure
         if: failure()
         run: |
           echo "=== Traefik Logs (FAILURE) ==="
-          docker compose -f integration-test/docker-compose.yml logs traefik
+          cd integration-test
+          docker compose logs traefik || echo "Could not retrieve logs"
+          docker compose down
 
-      - name: Cleanup
-        if: always()
+      - name: Cleanup on success
+        if: success()
         run: |
           cd integration-test
-          docker compose down
+          docker compose down || echo "Services already cleaned up"

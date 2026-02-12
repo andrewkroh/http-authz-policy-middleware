@@ -1,0 +1,12 @@
+# Lightweight test container with curl
+FROM alpine:3.19
+
+# Install curl for HTTP testing
+RUN apk add --no-cache curl bash
+
+# Copy test script
+COPY test.sh /test.sh
+RUN chmod +x /test.sh
+
+# Run tests
+CMD ["/test.sh"]
