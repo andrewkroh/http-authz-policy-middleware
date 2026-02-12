@@ -1,3 +1,5 @@
+![authz-ferris.png](docs/authz-ferris.png)
+
 # HTTP Authorization Policy Middleware
 
 [![CI](https://github.com/andrewkroh/http-authz-policy-middleware/actions/workflows/ci.yml/badge.svg)](https://github.com/andrewkroh/http-authz-policy-middleware/actions/workflows/ci.yml)
