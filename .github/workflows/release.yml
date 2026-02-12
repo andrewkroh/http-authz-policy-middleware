@@ -31,6 +31,11 @@ jobs:
         with:
           targets: wasm32-wasip1
 
+      - name: Install wasm-opt
+        run: |
+          echo "Installing wasm-opt for binary optimization..."
+          cargo install wasm-opt
+
       - name: Cache cargo dependencies
         uses: actions/cache@v4
         with:
@@ -44,13 +49,19 @@ jobs:
 
       - name: Build release WASM
         run: |
-          echo "Building WASM plugin..."
-          cargo build --target wasm32-wasip1 --release
-          cp target/wasm32-wasip1/release/traefik_authz_wasm.wasm plugin.wasm
-          ls -lh plugin.wasm
+          echo "Building optimized WASM plugin with make release..."
+          make release
           SIZE=$(stat -c%s plugin.wasm)
           SIZE_KB=$((SIZE / 1024))
-          echo "Binary size: ${SIZE_KB} KB"
+          echo "Optimized binary size: ${SIZE_KB} KB"
+
+          # Verify the binary was optimized
+          if [ $SIZE_KB -lt 700 ]; then
+            echo "✓ Binary is optimized (~650 KB expected)"
+          else
+            echo "⚠ Warning: Binary seems larger than expected (>700 KB)"
+            echo "Expected: ~650 KB with wasm-opt optimization"
+          fi
 
       - name: Install git-cliff
         run: cargo install git-cliff

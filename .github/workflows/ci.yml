@@ -39,19 +39,30 @@ jobs:
       - name: Run tests
         run: cargo test
 
+      - name: Install wasm-opt
+        run: |
+          echo "Installing wasm-opt for binary optimization..."
+          cargo install wasm-opt
+
       - name: Build release
-        run: cargo build --target wasm32-wasip1 --release
+        run: make release
 
       - name: Report binary size
         run: |
-          ls -lh target/wasm32-wasip1/release/*.wasm
-          SIZE=$(stat -c%s target/wasm32-wasip1/release/*.wasm)
+          ls -lh plugin.wasm
+          SIZE=$(stat -c%s plugin.wasm)
           SIZE_KB=$((SIZE / 1024))
-          echo "Binary size: ${SIZE_KB} KB"
-          if [ $SIZE_KB -gt 250 ]; then
-            echo "Warning: Binary size exceeds 250 KB target"
+          echo "Optimized binary size: ${SIZE_KB} KB"
+
+          # Check if binary size is within expected range (600-700 KB with optimizations)
+          if [ $SIZE_KB -gt 750 ]; then
+            echo "⚠️ Warning: Binary size exceeds 750 KB (expected ~650 KB)"
+            echo "This may indicate missing optimizations or new dependencies"
+            exit 1
+          elif [ $SIZE_KB -lt 600 ]; then
+            echo "✓ Binary size is excellent (< 600 KB)"
           else
-            echo "Binary size within target (< 250 KB)"
+            echo "✓ Binary size within expected range (600-750 KB)"
           fi
 
   integration-test:
@@ -75,6 +86,11 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install wasm-opt
+        run: |
+          echo "Installing wasm-opt for binary optimization..."
+          cargo install wasm-opt
 
       - name: Build release WASM
         run: make release

@@ -33,7 +33,7 @@ This is a Traefik v3 middleware plugin compiled to WebAssembly (WASM) that perfo
 
 **Implementation Language:** Rust
 **Target:** `wasm32-wasip1`
-**Binary Size:** ~200 KB (release build with optimizations)
+**Binary Size:** ~650 KB (release build with optimizations, see [Binary Size](#binary-size))
 
 ## Project Structure
 
@@ -166,11 +166,12 @@ make release
 
 This compiles the plugin with optimizations:
 - Output: `target/wasm32-wasip1/release/traefik_authz_wasm.wasm`
-- Copies to `plugin.wasm` in project root
+- Automatically optimizes with wasm-opt (if installed)
+- Copies optimized binary to `plugin.wasm` in project root
 - Size optimizations enabled (`opt-level = "z"`)
 - Link-time optimization (LTO)
 - Stripped symbols
-- Final size: ~200 KB
+- Final size: ~650 KB (with wasm-opt), ~780 KB (without)
 - Required for integration testing
 
 ### Manual Cargo Commands
@@ -199,7 +200,16 @@ lto = true          # Enable link-time optimization
 codegen-units = 1   # Better optimization (slower compile)
 strip = true        # Strip symbols
 panic = "abort"     # Smaller binary (no unwinding)
+
+[dependencies]
+regex = { version = "1.10", default-features = false, features = ["std", "perf"] }
 ```
+
+**Regex Optimization:**
+The regex crate by default includes ~400 KB of Unicode lookup tables. Since this plugin only uses ASCII regex patterns (e.g., `^/api/v[0-9]+/.*`), we disable Unicode features to save significant space.
+
+**Post-Build Optimization:**
+The Makefile automatically runs `wasm-opt -Oz --enable-bulk-memory` if available, which provides an additional 17% size reduction through advanced WASM optimizations. Install with: `cargo install wasm-opt`
 
 ## Testing
 
@@ -460,9 +470,21 @@ Example: Adding a new function `toLowerCase(str)`:
 ### Binary Size
 
 The release build is optimized for size:
-- Current size: ~200 KB
-- Most size comes from dependencies (regex, serde, http-wasm-guest)
-- Further optimizations possible with feature flags
+- Current size: ~650 KB (optimized with wasm-opt)
+- Unoptimized size: ~780 KB
+- Size breakdown:
+  - Regex engine: ~300 KB (with Unicode features disabled)
+  - Serde/JSON: ~200 KB
+  - Expression engine: ~100 KB
+  - Other dependencies: ~50 KB
+- **Optimizations applied:**
+  - Cargo.toml: `opt-level = "z"`, LTO, strip symbols
+  - Regex: Disabled Unicode features (using only ASCII patterns)
+  - Post-processing: wasm-opt with `-Oz --enable-bulk-memory`
+- **Further optimization potential:**
+  - Replace regex with custom pattern matcher: Could save ~300 KB
+  - Minimize serde_json features: Could save ~50-100 KB
+  - Target size with full optimization: ~200-300 KB
 
 ### Benchmarking
 

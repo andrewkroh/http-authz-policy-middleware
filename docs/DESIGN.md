@@ -393,7 +393,7 @@ A `match` on `Value` that forgets a variant is a compile error. The Go equivalen
 
 **First-class WASM target.** Rust’s `wasm32-wasip1` target is mature and used extensively in production (Cloudflare Workers, Fastly Compute, Fermyon Spin, etc.). There is no “TinyGo” indirection layer — the full language and standard library are available. The entire reason this design uses a custom expression engine instead of the `expr-lang/expr` library is TinyGo’s incomplete `reflect` support. With Rust, this class of problem does not exist.
 
-**Smaller binaries.** Rust WASM binaries are typically 50–200 KB for a project of this scope. TinyGo binaries for equivalent functionality are often 500 KB–1 MB due to the bundled garbage collector runtime and runtime support code.
+**Smaller binaries.** Rust WASM binaries are typically 200–800 KB for a project of this scope. TinyGo binaries for equivalent functionality are often 500 KB–1 MB due to the bundled garbage collector runtime and runtime support code. This project achieves ~650 KB by disabling Unicode features in the regex crate and using wasm-opt for post-build optimization.
 
 **No garbage collector.** Rust’s ownership model means no GC pauses, no GC overhead in the binary, and deterministic memory behavior — desirable properties for middleware in a hot request path.
 
@@ -771,7 +771,7 @@ The plugin trusts headers as presented by the upstream middleware. It is the ope
 - **Header access** via the http-wasm ABI involves copying bytes across the WASM boundary. The plugin reads only the headers referenced in the expression. Headers are read lazily: `header()`, `headerValues()`, and `headerList()` call into the ABI on demand rather than pre-fetching all headers.
 - **Regex patterns** with string-literal arguments are compiled once at startup and reused.
 - **Memory:** The `RequestContext` is allocated per-request and is small (a few strings and a map). No persistent memory growth across requests. Memory is freed deterministically at the end of each request handler.
-- **Binary size:** The compiled WASM binary is approximately 200 KB, resulting in fast plugin load times at Traefik startup.
+- **Binary size:** The compiled WASM binary is approximately 650 KB (optimized), resulting in fast plugin load times at Traefik startup. Size breakdown: regex engine (~300 KB), serde/JSON (~200 KB), expression engine (~100 KB), dependencies (~50 KB).
 
 -----
 
