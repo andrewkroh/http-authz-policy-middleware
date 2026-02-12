@@ -1,0 +1,16 @@
+displayName: Attribute-Based Authorization
+type: middleware
+runtime: wasm
+summary: >-
+  Authorization middleware that evaluates expressions against request
+  attributes (method, path, headers). Ideal for enforcing team-based
+  access policies from upstream ForwardAuth headers.
+
+testData:
+  expression: 'header("X-Test") == "pass"'
+  tests:
+    - name: "catalog validation"
+      request:
+        headers:
+          X-Test: "pass"
+      expect: true
