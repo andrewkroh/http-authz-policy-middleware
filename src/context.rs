@@ -25,6 +25,36 @@ pub struct RequestContext {
 }
 
 impl RequestContext {
+    /// Create a RequestContext from an http-wasm Request
+    #[cfg(target_arch = "wasm32")]
+    pub fn from_request(request: &http_wasm_guest::host::Request) -> Self {
+        let headers = HashMap::new();
+        let all_headers = HashMap::new();
+
+        // Extract method
+        let method = String::from_utf8_lossy(&request.method()).to_string();
+
+        // Extract URI
+        let uri = String::from_utf8_lossy(&request.uri()).to_string();
+        let path = uri.split('?').next().unwrap_or(&uri).to_string();
+
+        // Extract host - simplified for now
+        // TODO: Properly extract host from headers
+        let host = String::new();
+
+        // TODO: Properly extract all headers
+        // http-wasm-guest 0.7 API doesn't provide easy header iteration
+        // This is a limitation that needs to be addressed
+
+        RequestContext {
+            method,
+            path,
+            host,
+            headers,
+            all_headers,
+        }
+    }
+
     /// Create a RequestContext from a test request
     pub fn from_test(test_req: &TestRequest) -> Self {
         let mut headers = HashMap::new();
