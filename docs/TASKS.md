@@ -184,26 +184,26 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [x] Verify: Examples match DESIGN.md Section 4.7
 - [x] Commit Phase 9 changes
 
-## Phase 10: Build Infrastructure and Examples
-- [ ] Update Makefile with all targets
-- [ ] Add build target (debug build)
-- [ ] Add release target (release build + copy to plugin.wasm)
-- [ ] Add test target (cargo test)
-- [ ] Add clean target (cargo clean + rm plugin.wasm)
-- [ ] Add check target (clippy + fmt --check)
-- [ ] Create examples/ directory
-- [ ] Create examples/team-based-access.yml
-- [ ] Create examples/path-restrictions.yml
-- [ ] Create examples/combined-rules.yml
-- [ ] Update .gitignore with Rust patterns
-- [ ] Add /target/ to .gitignore
-- [ ] Add *.rs.bk to .gitignore
-- [ ] Add plugin.wasm to .gitignore
-- [ ] Add Cargo.lock to .gitignore
-- [ ] Verify: `make build` succeeds
-- [ ] Verify: `make test` runs all tests
-- [ ] Verify: `make release` produces plugin.wasm
-- [ ] Commit Phase 10 changes
+## Phase 10: Build Infrastructure and Examples ✅
+- [x] Update Makefile with all targets
+- [x] Add build target (debug build)
+- [x] Add release target (release build + copy to plugin.wasm)
+- [x] Add test target (cargo test)
+- [x] Add clean target (cargo clean + rm plugin.wasm)
+- [x] Add check target (clippy + fmt --check)
+- [x] Create examples/ directory
+- [x] Create examples/team-based-access.yml
+- [x] Create examples/path-restrictions.yml
+- [x] Create examples/combined-rules.yml
+- [x] Update .gitignore with Rust patterns
+- [x] Add /target/ to .gitignore
+- [x] Add *.rs.bk to .gitignore
+- [x] Add plugin.wasm to .gitignore
+- [x] Add Cargo.lock to .gitignore
+- [x] Verify: `make build` succeeds
+- [x] Verify: `make test` runs all tests
+- [x] Verify: `make release` produces plugin.wasm
+- [x] Commit Phase 10 changes
 
 ## Phase 11: Testing and Validation
 - [ ] Create src/expr/tests.rs for integration tests
@@ -270,9 +270,9 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 
 ## Progress Summary
 - **Total Phases:** 13
-- **Completed Phases:** 9
-- **Current Phase:** Phase 10 - Build Infrastructure and Examples
-- **Overall Progress:** 9/13 phases complete (69.2%)
+- **Completed Phases:** 10
+- **Current Phase:** Phase 11 - Testing and Validation
+- **Overall Progress:** 10/13 phases complete (76.9%)
 
 ---
 
