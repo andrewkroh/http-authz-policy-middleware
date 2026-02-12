@@ -21,8 +21,8 @@ services:
     image: hashicorp/http-echo:latest
     container_name: backend-test
     command:
-      - -text=Backend response: OK
-      - -listen=:8080
+      - "-text=Backend response: OK"
+      - "-listen=:8080"
     networks:
       - test-network
 
