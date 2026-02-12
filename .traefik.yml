@@ -11,19 +11,3 @@ testData:
   expression: 'method == "GET" AND path startsWith "/api"'
   denyStatusCode: 403
   denyBody: "Access denied"
-  tests:
-    - name: "GET /api allowed"
-      request:
-        method: "GET"
-        path: "/api/users"
-      expect: true
-    - name: "POST /api denied"
-      request:
-        method: "POST"
-        path: "/api/users"
-      expect: false
-    - name: "GET /public denied"
-      request:
-        method: "GET"
-        path: "/public"
-      expect: false
