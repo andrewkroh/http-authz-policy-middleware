@@ -1,0 +1,54 @@
+# Team-based access control example
+#
+# This configuration demonstrates how to control access based on team membership
+# headers injected by an upstream ForwardAuth middleware.
+#
+# Use case: Only allow access to users who are members of specific teams
+
+http:
+  routers:
+    api-router:
+      rule: "Host(`api.example.com`)"
+      service: api-service
+      middlewares:
+        - team-authz
+
+  middlewares:
+    team-authz:
+      plugin:
+        http-authz-policy-middleware:
+          # Allow access only if user is in platform-eng or devops teams
+          expression: 'anyOf(headerList("X-Auth-User-Teams"), "platform-eng", "devops")'
+          denyStatusCode: 403
+          denyBody: "Access denied: requires platform-eng or devops team membership"
+
+          # Built-in tests validate configuration at Traefik startup
+          tests:
+            - name: "platform-eng team allowed"
+              request:
+                headers:
+                  X-Auth-User-Teams: "platform-eng,frontend"
+              expect: true
+
+            - name: "devops team allowed"
+              request:
+                headers:
+                  X-Auth-User-Teams: "devops,sre"
+              expect: true
+
+            - name: "other teams denied"
+              request:
+                headers:
+                  X-Auth-User-Teams: "marketing,sales"
+              expect: false
+
+            - name: "missing header denied"
+              request:
+                headers: {}
+              expect: false
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://api-backend:8080"
