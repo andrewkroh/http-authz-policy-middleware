@@ -138,11 +138,26 @@ make test
 make check
 ```
 
+## Integration Testing
+
+Docker-based integration tests are in `integration-test/`. To run:
+
+```bash
+make release
+cd integration-test
+./setup-plugin.sh
+docker compose up -d
+./test.sh
+docker compose down
+```
+
+See `integration-test/README.md` for full details.
+
 ## Development
 
-See `/workspace/docs/DESIGN.md` for comprehensive design documentation.
+See `docs/DESIGN.md` for comprehensive design documentation.
 
-See `/workspace/docs/TASKS.md` for implementation progress tracking.
+See `docs/TASKS.md` for implementation progress tracking.
 
 ## Examples
 
@@ -176,12 +191,6 @@ Evaluation errors return HTTP 500:
 - Usually caused by invalid regex patterns in `matches()` operator
 - Check Traefik logs for detailed error messages
 - All other type errors are caught at compile time
-
-### Header Access
-
-**Note**: Current WASM implementation has limited header access due to http-wasm-guest 0.7 API constraints. Header functions may not work as expected until this is enhanced.
-
-For full header support, expressions using `header()`, `headerValues()`, and `headerList()` should be tested with the built-in test framework.
 
 ## Performance
 

@@ -6,6 +6,7 @@ Cargo.lock
 
 # WASM output
 plugin.wasm
+integration-test/plugins-local/
 
 # IDE
 .idea/

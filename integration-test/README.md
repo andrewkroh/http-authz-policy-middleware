@@ -14,9 +14,10 @@ This directory contains end-to-end integration tests that validate the plugin in
    make release
    ```
 
-2. **Start Traefik with the plugin**:
+2. **Set up the plugin directory** and **start Traefik**:
    ```bash
    cd integration-test
+   ./setup-plugin.sh
    docker compose up -d
    ```
 
@@ -55,17 +56,43 @@ The integration tests validate:
 - Expression: `method == "GET" OR method == "HEAD"`
 - Tests request method restrictions
 
+## How It Works
+
+### Plugin Directory Structure
+
+Traefik v3 local WASM plugins must follow a specific directory layout:
+
+```
+plugins-local/
+└── src/
+    └── github.com/
+        └── andrewkroh/
+            └── http-authz-policy-middleware/
+                ├── plugin.wasm
+                └── .traefik.yml
+```
+
+The `setup-plugin.sh` script creates this structure and copies the built
+`plugin.wasm` and `.traefik.yml` manifest into the correct location.
+
+### Configuration
+
+- **traefik.yml** - Static config declaring the local plugin via `experimental.localPlugins`
+- **dynamic.yml** - Dynamic config defining middleware instances with expressions and test cases
+- **docker-compose.yml** - Mounts `./plugins-local:/plugins-local` so Traefik can find the plugin
+
 ## Troubleshooting
 
 ### Traefik won't start
 - Check if plugin.wasm exists in project root: `ls -lh ../plugin.wasm`
+- Run `./setup-plugin.sh` to ensure the plugin directory is set up
 - View logs: `docker compose logs traefik`
 - Look for compilation or test errors in Traefik output
 
 ### Tests fail
 - Ensure Traefik is fully started before running tests
 - Check Traefik logs for plugin errors: `docker compose logs traefik`
-- Verify plugin loaded successfully (look for test results in logs)
+- Verify plugin loaded successfully (look for middleware creation in logs)
 
 ### Port conflicts
 - Default ports: 8080 (HTTP), 8081 (Dashboard)
@@ -88,6 +115,7 @@ The integration tests can be run in CI/CD:
 - name: Run integration tests
   run: |
     cd integration-test
+    ./setup-plugin.sh
     docker compose up -d
     sleep 10  # Wait for Traefik startup
     ./test.sh
@@ -97,6 +125,6 @@ The integration tests can be run in CI/CD:
 
 ## Notes
 
-- **Local plugin loading**: The plugin is mounted from `../plugin.wasm`, not loaded from the Traefik plugin catalog
-- **WASM experimental feature**: Requires Traefik v3.0+ with `experimental.wasm.enabled: true`
+- **Local plugin loading**: The plugin must follow Traefik's strict directory structure under `plugins-local/`
+- **WASM experimental feature**: Requires Traefik v3.0+ with `experimental.localPlugins`
 - **Startup tests**: Test cases in dynamic.yml are validated when Traefik starts - if any fail, Traefik will abort

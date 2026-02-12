@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   traefik:
     image: traefik:v3.0
@@ -10,10 +8,7 @@ services:
     volumes:
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
       - ./dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
-      - ../plugin.wasm:/etc/traefik/plugins/authz.wasm:ro
-    command:
-      - --log.level=DEBUG
-      - --api.insecure=true
+      - ./plugins-local:/plugins-local:ro
     networks:
       - test-network
 

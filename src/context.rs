@@ -28,8 +28,8 @@ impl RequestContext {
     /// Create a RequestContext from an http-wasm Request
     #[cfg(target_arch = "wasm32")]
     pub fn from_request(request: &http_wasm_guest::host::Request) -> Self {
-        let headers = HashMap::new();
-        let all_headers = HashMap::new();
+        let mut headers = HashMap::new();
+        let mut all_headers = HashMap::new();
 
         // Extract method
         let method = String::from_utf8_lossy(&request.method()).to_string();
@@ -38,13 +38,26 @@ impl RequestContext {
         let uri = String::from_utf8_lossy(&request.uri()).to_string();
         let path = uri.split('?').next().unwrap_or(&uri).to_string();
 
-        // Extract host - simplified for now
-        // TODO: Properly extract host from headers
-        let host = String::new();
+        // Extract all headers
+        let all = request.header().get();
+        for (name_bytes, values_bytes) in &all {
+            let name = String::from_utf8_lossy(name_bytes).to_lowercase();
+            let values: Vec<String> = values_bytes
+                .iter()
+                .map(|v| String::from_utf8_lossy(v).to_string())
+                .collect();
 
-        // TODO: Properly extract all headers
-        // http-wasm-guest 0.7 API doesn't provide easy header iteration
-        // This is a limitation that needs to be addressed
+            if let Some(first) = values.first() {
+                headers.entry(name.clone()).or_insert_with(|| first.clone());
+            }
+            all_headers
+                .entry(name)
+                .or_insert_with(Vec::new)
+                .extend(values);
+        }
+
+        // Extract host from headers or default to empty
+        let host = headers.get("host").cloned().unwrap_or_default();
 
         RequestContext {
             method,

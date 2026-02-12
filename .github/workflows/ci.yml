@@ -49,9 +49,9 @@ jobs:
           SIZE_KB=$((SIZE / 1024))
           echo "Binary size: ${SIZE_KB} KB"
           if [ $SIZE_KB -gt 250 ]; then
-            echo "⚠️  Warning: Binary size exceeds 250 KB target"
+            echo "Warning: Binary size exceeds 250 KB target"
           else
-            echo "✅ Binary size within target (< 250 KB)"
+            echo "Binary size within target (< 250 KB)"
           fi
 
   integration-test:
@@ -78,6 +78,11 @@ jobs:
 
       - name: Build release WASM
         run: make release
+
+      - name: Set up plugin directory
+        run: |
+          cd integration-test
+          ./setup-plugin.sh
 
       - name: Start Docker Compose
         run: |

@@ -260,24 +260,33 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [x] Document how to debug with Traefik logs
 - [x] Commit Phase 12 changes
 
-## Phase 13: Task Tracking Setup
+## Phase 13: Task Tracking Setup ✅
 - [x] Create docs/TASKS.md with all phases
 - [x] Include all tasks from implementation plan
 - [x] Add verification criteria for each task
 - [x] Commit TASKS.md to repository
 
+## Phase 14: Fix Integration Tests (End-to-End Validation) ✅
+- [x] Fix traefik.yml: replace broken `experimental.wasm.enabled` with `experimental.localPlugins`
+- [x] Fix docker-compose.yml: mount `./plugins-local:/plugins-local:ro` instead of direct WASM mount
+- [x] Create `setup-plugin.sh` to build the required `plugins-local/src/github.com/...` directory structure
+- [x] Fix `src/config.rs`: add custom deserializers for Traefik's string-based config serialization
+  - `deny_status_code` (u16 from string or number)
+  - `expect` (bool from string or boolean)
+  - `headers` (map from empty string or object)
+- [x] Fix `src/context.rs`: implement header extraction in `from_request()` using `request.header().get()`
+- [x] Rebuild WASM binary and verify all 57 unit/integration tests pass
+- [x] Verify all 6 Docker integration tests pass end-to-end
+- [x] Re-enable integration-test job in CI workflow
+- [x] Update `integration-test/README.md` to reflect working configuration
+- [x] Update root `README.md` with working integration test instructions
+- [x] Remove obsolete `integration-test/CONFIGURATION_GUIDE.md`
+- [x] Add `integration-test/plugins-local/` to `.gitignore`
+
 ---
 
 ## Progress Summary
-- **Total Phases:** 13
-- **Completed Phases:** 12
+- **Total Phases:** 14
+- **Completed Phases:** 14
 - **Current Phase:** Complete! All phases finished
-- **Overall Progress:** 13/13 phases complete (100%)
-
----
-
-## Notes
-- Update checkboxes as tasks complete: `- [x]` for done
-- Commit after each major phase completion
-- Verify CI passes before moving to next phase
-- Update progress summary after each phase
+- **Overall Progress:** 14/14 phases complete (100%)
