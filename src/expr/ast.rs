@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Andrew Kroh
+// SPDX-License-Identifier: MIT
+
 // Abstract Syntax Tree (AST) for the expression language
 
 use std::fmt;

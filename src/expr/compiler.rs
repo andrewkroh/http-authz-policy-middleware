@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Andrew Kroh
+// SPDX-License-Identifier: MIT
+
 // Type checker and compiler for the expression language
 
 use super::ast::{BinOp, Expr, Ident};

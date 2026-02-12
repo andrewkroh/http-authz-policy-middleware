@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Andrew Kroh
+// SPDX-License-Identifier: MIT
+
 // Traefik WASM Authorization Middleware Plugin
 //
 // This plugin performs attribute-based authorization on HTTP requests

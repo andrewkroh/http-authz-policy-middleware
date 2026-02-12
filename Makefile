@@ -1,4 +1,4 @@
-.PHONY: build test clean release check
+.PHONY: build test clean release check check-license
 
 build:
 	cargo build --target wasm32-wasip1
@@ -17,3 +17,7 @@ clean:
 check:
 	cargo clippy --target wasm32-wasip1
 	cargo fmt --check
+	@$(MAKE) check-license
+
+check-license:
+	@./scripts/check-license-headers.sh

@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Andrew Kroh
+// SPDX-License-Identifier: MIT
+
 // Configuration structures for the authorization plugin
 //
 // Traefik passes plugin configuration as JSON where all values from YAML
