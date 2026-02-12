@@ -1,6 +1,5 @@
 # Design Document: Traefik WASM Authorization Middleware Plugin
 
-**Status:** Draft — Ready for Review  
 **Author:** Andrew Kroh  
 **Date:** 2025-02-12
 
