@@ -53,3 +53,73 @@ jobs:
           else
             echo "✅ Binary size within target (< 250 KB)"
           fi
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release WASM
+        run: make release
+
+      - name: Start Docker Compose
+        run: |
+          cd integration-test
+          docker-compose up -d
+
+      - name: Wait for Traefik
+        run: |
+          echo "Waiting for Traefik to start..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/ping > /dev/null 2>&1; then
+              echo "Traefik is ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Traefik did not start in time"
+              docker-compose -f integration-test/docker-compose.yml logs traefik
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Run integration tests
+        run: |
+          cd integration-test
+          chmod +x test.sh
+          ./test.sh
+
+      - name: Show Traefik logs on success
+        if: success()
+        run: |
+          echo "=== Traefik Logs ==="
+          docker-compose -f integration-test/docker-compose.yml logs traefik
+
+      - name: Show Traefik logs on failure
+        if: failure()
+        run: |
+          echo "=== Traefik Logs (FAILURE) ==="
+          docker-compose -f integration-test/docker-compose.yml logs traefik
+
+      - name: Cleanup
+        if: always()
+        run: |
+          cd integration-test
+          docker-compose down

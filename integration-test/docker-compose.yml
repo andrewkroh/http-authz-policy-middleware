@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik-authz-test
+    ports:
+      - "8080:80"
+      - "8081:8080"  # Traefik dashboard
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      - ../plugin.wasm:/etc/traefik/plugins/authz.wasm:ro
+    command:
+      - --log.level=DEBUG
+      - --api.insecure=true
+    networks:
+      - test-network
+
+  backend:
+    image: hashicorp/http-echo:latest
+    container_name: backend-test
+    command:
+      - -text=Backend response: OK
+      - -listen=:8080
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

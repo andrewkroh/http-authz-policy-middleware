@@ -1,0 +1,27 @@
+# Traefik static configuration for integration testing
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+log:
+  level: DEBUG
+
+api:
+  insecure: true
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+# WASM plugin configuration
+# Note: Traefik v3.0+ supports WASM plugins via experimental features
+experimental:
+  wasm:
+    enabled: true
