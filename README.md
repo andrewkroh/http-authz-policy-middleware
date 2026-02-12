@@ -1,5 +1,7 @@
 # Traefik WASM Authorization Middleware Plugin
 
+[![CI](https://github.com/USER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/ci.yml)
+
 A Traefik middleware plugin that performs attribute-based authorization on HTTP requests using a custom expression language.
 
 ## Overview
