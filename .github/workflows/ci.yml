@@ -8,6 +8,20 @@ on:
   workflow_dispatch:
 
 jobs:
+  commit-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Validate conventional commits
+        uses: cocogitto/cocogitto-action@v4
+        with:
+          command: check
+          args: --from-latest-tag
+
   build-and-test:
     runs-on: ubuntu-latest
     steps:

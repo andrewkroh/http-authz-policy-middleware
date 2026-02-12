@@ -8,7 +8,6 @@ Thank you for your interest in contributing! This document provides guidelines f
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
 - [Commit Message Guidelines](#commit-message-guidelines)
-- [Changelog System](#changelog-system)
 - [Pull Request Process](#pull-request-process)
 - [Testing Guidelines](#testing-guidelines)
 - [Documentation](#documentation)
@@ -69,7 +68,7 @@ This project follows a professional and respectful code of conduct. Please be ki
 
 ## Commit Message Guidelines
 
-This project uses **Conventional Commits** for automatic changelog generation. All commit messages must follow this format:
+This project uses **Conventional Commits** for automatic release notes generation. All commit messages must follow this format:
 
 ```
 <type>(<scope>): <subject>
@@ -81,12 +80,12 @@ This project uses **Conventional Commits** for automatic changelog generation. A
 
 ### Commit Types
 
-- **feat**: A new feature (generates "Features" section in changelog)
-- **fix**: A bug fix (generates "Bug Fixes" section in changelog)
-- **docs**: Documentation only changes (generates "Documentation" section)
-- **test**: Adding or updating tests (generates "Testing" section)
-- **refactor**: Code change that neither fixes a bug nor adds a feature (generates "Refactoring" section)
-- **perf**: Performance improvements (generates "Performance" section)
+- **feat**: A new feature
+- **fix**: A bug fix
+- **docs**: Documentation only changes
+- **test**: Adding or updating tests
+- **refactor**: Code change that neither fixes a bug nor adds a feature
+- **perf**: Performance improvements
 - **style**: Code style changes (formatting, missing semicolons, etc.)
 - **chore**: Changes to build process, dependencies, or auxiliary tools
 - **ci**: Changes to CI/CD configuration files
@@ -102,7 +101,7 @@ git commit -m "test: add integration tests for allOf function"
 git commit -m "refactor: simplify parser error handling"
 git commit -m "perf: optimize regex compilation with caching"
 
-# Bad commit messages (will be filtered out of changelog)
+# Bad commit messages (will be filtered out of release notes)
 git commit -m "update stuff"
 git commit -m "WIP"
 git commit -m "fix things"
@@ -129,50 +128,6 @@ git commit -m "feat: change expression syntax
 
 BREAKING CHANGE: Function calls now require parentheses"
 ```
-
-## Changelog System
-
-This project uses [git-cliff](https://git-cliff.org/) to automatically generate changelogs from commit messages.
-
-### How It Works
-
-1. **Automatic**: Changelogs are generated automatically during releases
-2. **Conventional Commits**: Only commits following the conventional format are included
-3. **Categorization**: Commits are automatically grouped by type (features, fixes, etc.)
-4. **Keep a Changelog**: Output follows the [Keep a Changelog](https://keepachangelog.com/) format
-
-### Configuration
-
-The changelog generation is configured in `cliff.toml`. Key settings:
-
-- Conventional commit parsing enabled
-- Non-conventional commits filtered out
-- Automatic grouping by commit type
-- Dependency updates and PR preparation commits skipped
-
-### Manual Changelog Generation (Optional)
-
-For testing or preview purposes:
-
-```bash
-# Install git-cliff
-cargo install git-cliff
-
-# Preview unreleased changes
-git cliff --unreleased
-
-# Generate changelog entry for unreleased changes
-git cliff --unreleased --prepend CHANGELOG.md
-
-# Generate changelog for a specific version
-git cliff --tag v0.2.0 --prepend CHANGELOG.md
-```
-
-### What NOT to Do
-
-- **Do NOT manually edit CHANGELOG.md** unless fixing a mistake
-- **Do NOT create changelog fragments** (git-cliff generates from commits)
-- **Do NOT skip conventional commit format** (your changes won't appear in the changelog)
 
 ## Pull Request Process
 
@@ -343,9 +298,8 @@ Releases are automated via GitHub Actions when version tags are pushed. See [CLA
    ```
 4. GitHub Actions will automatically:
    - Build the WASM plugin
-   - Generate changelog
+   - Generate release notes from commits
    - Create GitHub Release with plugin package
-   - Update CHANGELOG.md
 
 **Tag Format:** Must follow semantic versioning with `v` prefix (e.g., `v0.1.0`, `v1.2.3`)
 
@@ -354,7 +308,7 @@ Releases are automated via GitHub Actions when version tags are pushed. See [CLA
 Contributors do not create releases. Maintainers will:
 - Review and merge your PRs
 - Include changes in the next release
-- Credit you in the automated changelog (based on git commits)
+- Credit you in the release notes (based on git commits)
 
 Your commit messages following conventional commit format ensure your contributions are properly documented in release notes.
 

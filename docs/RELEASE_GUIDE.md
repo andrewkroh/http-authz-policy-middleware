@@ -47,7 +47,7 @@ git push origin v0.2.0
 
 GitHub Actions will automatically:
 - Build WASM plugin
-- Generate changelog
+- Generate release notes from commits
 - Create GitHub Release
 - Package plugin for Traefik catalog
 
@@ -67,7 +67,6 @@ Each release includes:
 | `http-authz-policy-middleware-vX.Y.Z.zip` | Plugin package for Traefik catalog |
 | `plugin.wasm` | Compiled WASM binary |
 | `.traefik.yml` | Plugin manifest |
-| `CHANGELOG.md` | Full changelog |
 
 ## Versioning
 

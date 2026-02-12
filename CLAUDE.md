@@ -18,7 +18,7 @@ This document provides comprehensive development workflow instructions for contr
 - [Git History Rewrite](#git-history-rewrite)
 - [Contributing](#contributing)
   - [Commit Message Guidelines](#commit-message-guidelines)
-  - [Changelog Management](#changelog-management)
+  - [Release Notes](#release-notes)
 - [Release Process](#release-process)
 
 ## Project Overview
@@ -62,22 +62,17 @@ This is a Traefik v3 middleware plugin compiled to WebAssembly (WASM) that perfo
 ├── examples/                   # Example Traefik configurations
 ├── scripts/
 │   ├── check-license.sh        # License header validation
-│   ├── generate-changelog.sh   # Changelog generation helper
 │   └── prepare-release.sh      # Release preparation automation
 ├── docs/
 │   ├── DESIGN.md               # Comprehensive design documentation
-│   ├── TASKS.md                # Implementation progress tracking
-│   └── CHANGELOG_SYSTEM.md     # Changelog system documentation
+│   └── TASKS.md                # Implementation progress tracking
 ├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml              # CI/CD pipeline
-│   │   ├── changelog.yml       # Changelog generation workflow
-│   │   └── release.yml         # Automated release workflow
-│   └── CHANGELOG_GUIDE.md      # Quick changelog reference
+│   └── workflows/
+│       ├── ci.yml              # CI/CD pipeline
+│       └── release.yml         # Automated release workflow
 ├── Cargo.toml                  # Rust dependencies and build config
 ├── Makefile                    # Build automation
-├── cliff.toml                  # git-cliff configuration for changelog generation
-├── CHANGELOG.md                # Project changelog (auto-generated)
+├── cliff.toml                  # git-cliff configuration for release notes
 ├── CONTRIBUTING.md             # Contributing guidelines
 ├── LICENSE                     # MIT license
 ├── .traefik.yml                # Traefik plugin manifest
@@ -714,44 +709,20 @@ These commit messages are used to automatically generate changelogs using git-cl
 - Test coverage
 - Documentation completeness
 
-### Changelog Management
+### Release Notes
 
-This project uses [git-cliff](https://git-cliff.org/) for automatic changelog generation based on conventional commits.
+This project uses [git-cliff](https://git-cliff.org/) to generate release notes from conventional commits. No changelog file is checked into the repository — release notes are generated at release time and included in the GitHub release.
 
-**View Current Changelog:**
-```bash
-# View the current CHANGELOG.md
-cat CHANGELOG.md
-```
-
-**Generate Changelog for Unreleased Changes:**
+**Preview release notes locally:**
 ```bash
 # Install git-cliff (if not already installed)
 cargo install git-cliff
 
-# Generate changelog for unreleased commits
-git cliff --unreleased --prepend CHANGELOG.md
-
-# Preview without writing
-git cliff --unreleased
+# Preview unreleased changes
+git cliff --unreleased --strip all
 ```
 
-**Generate Changelog for New Release:**
-```bash
-# Generate changelog for a specific tag
-git cliff --tag v0.2.0 --prepend CHANGELOG.md
-
-# Generate changelog for all releases
-git cliff --prepend CHANGELOG.md
-```
-
-**Configuration:**
-- Changelog configuration is in `cliff.toml`
-- Follows conventional commit format
-- Automatically categorizes commits by type (feat, fix, docs, etc.)
-- Skips non-conventional commits and dependency updates
-
-**Note:** The changelog is automatically updated during the release process by GitHub Actions. Manual updates are only needed for local testing or preview purposes.
+**Configuration:** `cliff.toml` defines how commits are categorized and formatted.
 
 ## Release Process
 
@@ -780,8 +751,8 @@ Before tagging a release, ensure:
 - [ ] Code is formatted: `cargo fmt --check`
 - [ ] No clippy warnings: `cargo clippy --target wasm32-wasip1`
 - [ ] Documentation is up to date
-- [ ] CHANGELOG.md reflects recent changes (preview with `git cliff --unreleased`)
 - [ ] All recent commits follow conventional commit format
+- [ ] Release notes look good (preview with `git cliff --unreleased --strip all`)
 
 #### 3. Create and Push a Version Tag
 
@@ -832,17 +803,14 @@ Once the tag is pushed, GitHub Actions automatically:
 
 1. **Validates the tag format** - Ensures it follows `vX.Y.Z` pattern
 2. **Builds the WASM plugin** - Compiles with release optimizations
-3. **Generates changelog** - Creates release notes using git-cliff
+3. **Generates release notes** - Creates notes from conventional commits using git-cliff
 4. **Packages the plugin** - Creates a ZIP archive with:
    - `plugin.wasm` - The compiled WASM binary
    - `.traefik.yml` - The plugin manifest
 5. **Creates GitHub Release** - Publishes release with:
-   - Automatic release notes from commits
-   - Changelog entry for this version
+   - Release notes generated from commits
    - Plugin package ZIP
    - Individual plugin files (plugin.wasm, .traefik.yml)
-   - Full CHANGELOG.md
-6. **Updates CHANGELOG.md** - Commits updated changelog back to main branch
 
 #### 5. Post-Release Steps
 
@@ -863,7 +831,6 @@ Each release includes these artifacts:
 | `http-authz-policy-middleware-vX.Y.Z.zip` | Complete plugin package | Submit to Traefik Plugin Catalog |
 | `plugin.wasm` | Compiled WASM binary | Direct use in Traefik |
 | `.traefik.yml` | Plugin manifest | Required metadata |
-| `CHANGELOG.md` | Full project changelog | View all changes |
 
 ### Traefik Plugin Catalog Submission
 
@@ -906,7 +873,7 @@ git push origin v0.1.0
 - Ensure all CI checks pass on main branch
 - Check that `wasm32-wasip1` target builds successfully
 
-**Changelog not updating:**
+**Release notes empty:**
 - Ensure commits follow conventional commit format
 - Check `cliff.toml` configuration
 - Verify git history is available (fetch-depth: 0)

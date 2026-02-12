@@ -66,13 +66,10 @@ jobs:
       - name: Install git-cliff
         run: cargo install git-cliff
 
-      - name: Generate changelog for release
+      - name: Generate release notes
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          echo "Generating changelog for $TAG..."
-          git cliff --tag "$TAG" --prepend CHANGELOG.md
-
-          # Extract changelog entry for this release (for release notes)
+          echo "Generating release notes for $TAG..."
           git cliff --tag "$TAG" --unreleased --strip all > release-notes.md
 
           echo "=== Release Notes Preview ==="
@@ -101,26 +98,10 @@ jobs:
             ${{ env.ARCHIVE_NAME }}
             plugin.wasm
             .traefik.yml
-            CHANGELOG.md
           body_path: release-notes.md
           draft: false
           prerelease: false
-          generate_release_notes: true
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update CHANGELOG.md in repository
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Check if CHANGELOG.md was updated
-          if git diff --quiet CHANGELOG.md; then
-            echo "No changelog changes to commit"
-          else
-            git add CHANGELOG.md
-            git commit -m "chore(release): update CHANGELOG.md for ${GITHUB_REF#refs/tags/}"
-            git push origin HEAD:main || echo "Note: Could not push changelog update to main branch"
-          fi
 
       - name: Release summary
         run: |
@@ -134,7 +115,6 @@ jobs:
           echo "- \`plugin.wasm\` - Compiled WASM plugin" >> $GITHUB_STEP_SUMMARY
           echo "- \`.traefik.yml\` - Plugin manifest" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ env.ARCHIVE_NAME }}\` - Complete plugin package (for Traefik catalog)" >> $GITHUB_STEP_SUMMARY
-          echo "- \`CHANGELOG.md\` - Full project changelog" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "1. Verify release artifacts on GitHub Releases page" >> $GITHUB_STEP_SUMMARY

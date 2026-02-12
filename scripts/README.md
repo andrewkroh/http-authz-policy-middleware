@@ -1,6 +1,7 @@
 # Scripts Directory
 
-This directory contains utility scripts for maintaining and releasing the HTTP Authorization Policy Middleware project.
+This directory contains utility scripts for maintaining and releasing the HTTP
+Authorization Policy Middleware project.
 
 ## Available Scripts
 
@@ -24,33 +25,10 @@ Validates that all Rust source files have the required MIT license header.
 
 ---
 
-### `generate-changelog.sh`
-
-Helper script for generating changelog entries using git-cliff.
-
-**Usage:**
-```bash
-# Preview unreleased changes
-./scripts/generate-changelog.sh
-
-# Generate changelog for a specific version
-./scripts/generate-changelog.sh v0.2.0
-```
-
-**Features:**
-- Generates changelog from conventional commits
-- Supports both unreleased and tagged versions
-- Preview mode before updating CHANGELOG.md
-- Automatically categorizes commits by type
-
-**Requirements:**
-- `git-cliff` must be installed: `cargo install git-cliff`
-
----
-
 ### `prepare-release.sh`
 
-Automated release preparation script that runs pre-release checks and guides you through the release process.
+Automated release preparation script that runs pre-release checks and guides you
+through the release process.
 
 **Usage:**
 ```bash
@@ -212,7 +190,6 @@ Most scripts require:
 - Standard Unix tools (grep, sed, awk)
 
 Additional requirements per script:
-- `generate-changelog.sh`: git-cliff
 - `prepare-release.sh`: cargo, rustc, git-cliff
 - `rewrite-history.sh`: git (optionally git-filter-repo for faster operation)
 
