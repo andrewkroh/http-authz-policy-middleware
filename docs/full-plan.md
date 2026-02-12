@@ -811,12 +811,12 @@ networks:
 
 **Execution flow:**
 1. `make release` - Build release WASM binary
-2. `cd integration-test && docker-compose up -d` - Start Traefik + backend
+2. `cd integration-test && docker compose up -d` - Start Traefik + backend
 3. Wait for Traefik startup (check logs for plugin initialization)
 4. `./integration-test/test.sh` - Run test suite
 5. Verify all tests pass
-6. `docker-compose logs traefik` - Check for startup test results in logs
-7. `docker-compose down` - Cleanup
+6. `docker compose logs traefik` - Check for startup test results in logs
+7. `docker compose down` - Cleanup
 
 **Verification criteria:**
 - Docker Compose starts without errors
@@ -841,12 +841,12 @@ Add integration test job to `.github/workflows/ci.yml`:
       - name: Run integration tests
         run: |
           cd integration-test
-          docker-compose up -d
+          docker compose up -d
           sleep 10  # Wait for Traefik startup
           chmod +x test.sh
           ./test.sh
-          docker-compose logs traefik
-          docker-compose down
+          docker compose logs traefik
+          docker compose down
 ```
 
 **Documentation updates:**
@@ -909,7 +909,7 @@ Add integration test job to `.github/workflows/ci.yml`:
 - [ ] Create integration-test/dynamic.yml
 - [ ] Create integration-test/test.sh
 - [ ] Build release WASM: make release
-- [ ] Run docker-compose up and verify Traefik starts
+- [ ] Run docker compose up and verify Traefik starts
 - [ ] Execute test.sh and verify all tests pass
 - [ ] Add integration test job to GitHub Actions
 

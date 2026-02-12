@@ -17,7 +17,7 @@ This directory contains end-to-end integration tests that validate the plugin in
 2. **Start Traefik with the plugin**:
    ```bash
    cd integration-test
-   docker-compose up -d
+   docker compose up -d
    ```
 
 3. **Run the integration tests**:
@@ -27,12 +27,12 @@ This directory contains end-to-end integration tests that validate the plugin in
 
 4. **View Traefik logs** (to see plugin initialization):
    ```bash
-   docker-compose logs traefik
+   docker compose logs traefik
    ```
 
 5. **Clean up**:
    ```bash
-   docker-compose down
+   docker compose down
    ```
 
 ## What Gets Tested
@@ -59,12 +59,12 @@ The integration tests validate:
 
 ### Traefik won't start
 - Check if plugin.wasm exists in project root: `ls -lh ../plugin.wasm`
-- View logs: `docker-compose logs traefik`
+- View logs: `docker compose logs traefik`
 - Look for compilation or test errors in Traefik output
 
 ### Tests fail
 - Ensure Traefik is fully started before running tests
-- Check Traefik logs for plugin errors: `docker-compose logs traefik`
+- Check Traefik logs for plugin errors: `docker compose logs traefik`
 - Verify plugin loaded successfully (look for test results in logs)
 
 ### Port conflicts
@@ -88,11 +88,11 @@ The integration tests can be run in CI/CD:
 - name: Run integration tests
   run: |
     cd integration-test
-    docker-compose up -d
+    docker compose up -d
     sleep 10  # Wait for Traefik startup
     ./test.sh
-    docker-compose logs traefik
-    docker-compose down
+    docker compose logs traefik
+    docker compose down
 ```
 
 ## Notes

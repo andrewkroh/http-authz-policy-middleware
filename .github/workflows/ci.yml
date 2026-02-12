@@ -82,7 +82,7 @@ jobs:
       - name: Start Docker Compose
         run: |
           cd integration-test
-          docker-compose up -d
+          docker compose up -d
 
       - name: Wait for Traefik
         run: |
@@ -94,7 +94,7 @@ jobs:
             fi
             if [ $i -eq 30 ]; then
               echo "Traefik did not start in time"
-              docker-compose -f integration-test/docker-compose.yml logs traefik
+              docker compose -f integration-test/docker-compose.yml logs traefik
               exit 1
             fi
             sleep 2
@@ -110,16 +110,16 @@ jobs:
         if: success()
         run: |
           echo "=== Traefik Logs ==="
-          docker-compose -f integration-test/docker-compose.yml logs traefik
+          docker compose -f integration-test/docker-compose.yml logs traefik
 
       - name: Show Traefik logs on failure
         if: failure()
         run: |
           echo "=== Traefik Logs (FAILURE) ==="
-          docker-compose -f integration-test/docker-compose.yml logs traefik
+          docker compose -f integration-test/docker-compose.yml logs traefik
 
       - name: Cleanup
         if: always()
         run: |
           cd integration-test
-          docker-compose down
+          docker compose down

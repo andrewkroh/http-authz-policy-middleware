@@ -244,17 +244,17 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [x] Add Test 5: Complex expression test
 - [x] Make test.sh executable
 - [x] Build release: `make release`
-- [x] Start services: `cd integration-test && docker-compose up -d`
+- [x] Start services: `cd integration-test && docker compose up -d`
 - [x] Wait for Traefik startup
 - [x] Run tests: `./integration-test/test.sh`
 - [x] Verify: All tests pass
-- [x] Check Traefik logs: `docker-compose logs traefik`
+- [x] Check Traefik logs: `docker compose logs traefik`
 - [x] Verify: Plugin loaded successfully in logs
 - [x] Verify: Startup tests passed in logs
-- [x] Cleanup: `docker-compose down`
+- [x] Cleanup: `docker compose down`
 - [x] Update .github/workflows/ci.yml with integration test job
 - [x] Add integration-test job (depends on build-and-test)
-- [x] Configure job to build, start docker-compose, run tests
+- [x] Configure job to build, start docker compose, run tests
 - [x] Update README.md with integration testing section
 - [x] Document how to run integration tests locally
 - [x] Document how to debug with Traefik logs
