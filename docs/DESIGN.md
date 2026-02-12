@@ -34,14 +34,9 @@ However, the plugin is **general-purpose** — it has no hardcoded knowledge of 
 
 ### 2.1 Runtime Environment
 
-The plugin is compiled to WebAssembly targeting `wasm32-wasip1` and loaded by Traefik’s WASM plugin engine. It implements the [http-wasm HTTP Handler ABI](https://http-wasm.io/http-handler-abi/).
+The plugin is compiled to WebAssembly targeting `wasm32-wasip1` and loaded by Traefik's WASM plugin engine. It implements the [http-wasm HTTP Handler ABI](https://http-wasm.io/http-handler-abi/).
 
-The implementation language is an open decision for reviewers (see **Section 5: Implementation Language**). Both options have proven http-wasm guest libraries:
-
-|Language   |Guest Library                                                                       |Reference Plugin                                                   |
-|-----------|------------------------------------------------------------------------------------|-------------------------------------------------------------------|
-|Go (TinyGo)|[http-wasm-guest-tinygo](https://github.com/http-wasm/http-wasm-guest-tinygo) v0.4.0|[traefik/plugindemowasm](https://github.com/traefik/plugindemowasm)|
-|Rust       |[http-wasm-guest](https://crates.io/crates/http-wasm-guest) v0.7.0                  |[crate examples](https://crates.io/crates/http-wasm-guest)         |
+The implementation is written in **Rust** using the [http-wasm-guest](https://crates.io/crates/http-wasm-guest) v0.7.0 crate. See **Section 5: Implementation Language** for the rationale behind this choice.
 
 ### 2.2 Plugin Lifecycle
 
@@ -76,37 +71,19 @@ The implementation language is an open decision for reviewers (see **Section 5: 
 
 ### 2.3 Dependencies
 
-**If Go (TinyGo):**
-
-|Dependency                                   |Purpose                       |
-|---------------------------------------------|------------------------------|
-|`github.com/http-wasm/http-wasm-guest-tinygo`|http-wasm guest ABI for TinyGo|
-
-All other functionality uses Go standard library packages available in TinyGo: `encoding/json`, `strings`, `fmt`, `regexp`, `strconv`, `os`.
-
-**If Rust:**
-
 |Dependency            |Purpose                     |
 |----------------------|----------------------------|
 |`http-wasm-guest`     |http-wasm guest ABI for Rust|
 |`serde` + `serde_json`|JSON config deserialization |
 |`regex`               |Regular expression support  |
 
-The expression engine is custom-built in either case, with no additional dependencies.
+The expression engine is custom-built with no additional dependencies.
 
 ### 2.4 Build Command
 
-**Go (TinyGo):**
-
-```bash
-tinygo build -o plugin.wasm -scheduler=none --no-debug -target=wasi main.go
-```
-
-**Rust:**
-
 ```bash
 cargo build --target wasm32-wasip1 --release
-cp target/wasm32-wasip1/release/traefik_authz.wasm plugin.wasm
+cp target/wasm32-wasip1/release/http_authz_policy_middleware.wasm plugin.wasm
 ```
 
 -----
@@ -172,7 +149,7 @@ Configuration is passed to the plugin as JSON bytes via `handler.Host.GetConfig(
 experimental:
   plugins:
     authz:
-      moduleName: github.com/yourorg/traefik-authz-wasm
+      moduleName: github.com/username/http-authz-policy-middleware
       version: v1.0.0
 ```
 
@@ -390,13 +367,15 @@ path matches "^/api/v[0-9]+/(deploy|rollback)"
 
 ## 5. Implementation Language
 
-**Decision required:** The implementation language is an open choice between **Go (TinyGo)** and **Rust**. The expression language specification (Section 4), configuration schema (Section 3), test framework (Section 6), and overall architecture are all language-agnostic. This section presents both options for reviewer decision.
+**Decision: Rust**
 
-### 5.1 Recommendation Summary
+This project is implemented in Rust. The expression language specification (Section 4), configuration schema (Section 3), test framework (Section 6), and overall architecture were designed to be language-agnostic, but Rust was chosen as the implementation language for the reasons outlined below.
 
-Rust is the stronger technical choice for this specific project. Go is the pragmatic choice if the team wants to minimize ramp-up time. Either will produce a correct, performant plugin.
+### 5.1 Why Rust Was Chosen
 
-### 5.2 Arguments for Rust
+Rust proved to be the best fit for this specific project.
+
+### 5.2 Advantages of Rust for This Project
 
 **Language-level fit for the problem domain.** The core of this project is a small language implementation: a lexer, parser, AST, type-checker, and evaluator. Rust’s `enum` with data variants and exhaustive `match` is purpose-built for this. Token types, AST nodes, and evaluated values each become a single `enum`, and the compiler refuses to let you miss a case. In Go, these are modeled as interface types with type switches, where a missing case is a silent bug discovered at runtime.
 
@@ -439,67 +418,28 @@ fn main() {
 
 **Regex safety.** Rust’s `regex` crate uses the same RE2 algorithm as Go’s `regexp` package, guaranteeing linear-time matching with no catastrophic backtracking.
 
-**Richer error handling.** Rust’s `Result<T, E>` and `?` operator produce cleaner error propagation in the parser and evaluator than Go’s `if err != nil` chains, reducing boilerplate in exactly the code that needs to be most readable.
+**Richer error handling.** Rust's `Result<T, E>` and `?` operator produce cleaner error propagation in the parser and evaluator, reducing boilerplate in exactly the code that needs to be most readable.
 
-### 5.3 Arguments for Go (TinyGo)
+### 5.3 Trade-offs
 
-**Team familiarity.** The team is primarily Go developers. A Go implementation is immediately reviewable, maintainable, and contributable by the whole team without a language learning curve.
+While Rust was chosen for this project, Go (TinyGo) remains a viable alternative for future WASM plugins, particularly when:
 
-**Ecosystem alignment.** Traefik is a Go project. The official plugin demo, the primary documentation, and community examples are all Go. Debugging integration issues is easier when the plugin and host share a language ecosystem.
+- Ecosystem alignment with Traefik (a Go project) is a priority
+- Rapid prototyping without learning a new language is needed
+- The plugin logic doesn't require complex AST/enum modeling
 
-**Faster initial development.** For developers already fluent in Go, the implementation time is lower. The expression engine is ~300-400 lines of Go — small enough that TinyGo’s quirks (no `reflect`, limited stdlib) are manageable.
-
-**Simpler CI/CD.** TinyGo is a single binary install. The build step is one command. Rust requires the `wasm32-wasip1` target to be installed via `rustup`, and Cargo builds involve more moving parts (though this is a one-time setup cost).
-
-### 5.4 Comparison Matrix
-
-|Factor                         |Go (TinyGo)                                                                  |Rust                                                       |
-|-------------------------------|-----------------------------------------------------------------------------|-----------------------------------------------------------|
-|AST / enum modeling            |Interface + type switches (no exhaustiveness check)                          |`enum` + `match` (compile-time exhaustiveness)             |
-|WASM target maturity           |TinyGo WASI (workable but has gaps)                                          |`wasm32-wasip1` (first-class, battle-tested)               |
-|Binary size (estimated)        |500 KB – 1 MB                                                                |50 – 200 KB                                                |
-|Garbage collector              |Yes (bundled in binary)                                                      |None                                                       |
-|`reflect` limitations          |Severe — drove the custom expr engine decision                               |Not applicable                                             |
-|http-wasm guest library        |[http-wasm-guest-tinygo](https://github.com/http-wasm/http-wasm-guest-tinygo)|[http-wasm-guest](https://crates.io/crates/http-wasm-guest)|
-|Regex engine                   |`regexp` (RE2, linear-time)                                                  |`regex` crate (RE2, linear-time)                           |
-|Team familiarity               |High                                                                         |Low (but growing)                                          |
-|Traefik ecosystem alignment    |Strong                                                                       |Moderate (crate docs reference Traefik explicitly)         |
-|Error handling ergonomics      |`if err != nil` chains                                                       |`Result<T, E>` + `?` operator                              |
-|Estimated implementation effort|1–2 days                                                                     |2–4 days (including Rust ramp-up)                          |
+TinyGo's limitations (incomplete `reflect` support, larger binary sizes due to bundled GC) were significant factors that made Rust the better choice for this expression-engine-heavy implementation.
 
 -----
 
 ## 6. Implementation Structure
 
-The architecture is the same regardless of language. This section shows both layouts and key type sketches.
-
 ### 6.1 Package Layout
 
-**Go:**
+The project is structured as follows:
 
 ```
-traefik-authz-wasm/
-├── main.go              # Plugin entrypoint: init(), config loading, handler registration
-├── config.go            # Config struct, JSON parsing, test runner
-├── expr/
-│   ├── lexer.go         # Tokenizer
-│   ├── parser.go        # Recursive-descent parser → AST
-│   ├── ast.go           # AST node types
-│   ├── compiler.go      # Type-checks AST → Program
-│   ├── eval.go          # Evaluates Program against RequestContext
-│   └── eval_test.go     # Unit tests (run with `go test`, not TinyGo)
-├── context.go           # RequestContext: built from api.Request or TestRequest
-├── go.mod
-├── go.sum
-├── .traefik.yml
-├── Makefile
-└── README.md
-```
-
-**Rust:**
-
-```
-traefik-authz-wasm/
+http-authz-policy-middleware/
 ├── src/
 │   ├── main.rs          # Plugin entrypoint: config loading, handler registration
 │   ├── config.rs        # Config structs, serde deserialization, test runner
@@ -511,42 +451,15 @@ traefik-authz-wasm/
 │       ├── ast.rs       # AST node types (enums)
 │       ├── compiler.rs  # Type-checks AST → Program
 │       └── eval.rs      # Evaluates Program against RequestContext
+├── tests/               # Integration tests
+│   └── integration_test.rs
 ├── Cargo.toml
 ├── .traefik.yml
 ├── Makefile
 └── README.md
 ```
 
-### 6.2 Key Types (Go)
-
-```go
-// RequestContext is the data structure the expression evaluates against.
-// It is built from a live api.Request or from a TestRequest at startup.
-type RequestContext struct {
-    Method  string
-    Path    string
-    Host    string
-    headers map[string]string   // lowercase key → first value
-    allHeaders map[string][]string // lowercase key → all values
-}
-
-// Methods called by the expression evaluator:
-func (r *RequestContext) Header(name string) string
-func (r *RequestContext) HeaderValues(name string) []string
-func (r *RequestContext) HeaderList(name string) []string
-```
-
-```go
-// Program is the compiled, type-checked expression ready for evaluation.
-type Program struct {
-    root ast.Node
-}
-
-func Compile(expression string) (*Program, error)
-func (p *Program) Eval(ctx *RequestContext) (bool, error)
-```
-
-### 6.3 Key Types (Rust)
+### 6.2 Key Types
 
 ```rust
 /// The data structure the expression evaluates against.
@@ -593,47 +506,7 @@ impl Program {
 }
 ```
 
-### 6.4 Startup Flow (Go)
-
-```go
-func init() {
-    configBytes := handler.Host.GetConfig()
-
-    var config Config
-    if err := json.Unmarshal(configBytes, &config); err != nil {
-        handler.Host.Log(api.LogLevelError, "invalid config JSON: "+err.Error())
-        os.Exit(1)
-    }
-
-    program, err := expr.Compile(config.Expression)
-    if err != nil {
-        handler.Host.Log(api.LogLevelError, "invalid expression: "+err.Error())
-        os.Exit(1)
-    }
-
-    // Run test cases
-    for _, tc := range config.Tests {
-        ctx := NewRequestContextFromTest(tc.Request)
-        result, err := program.Eval(ctx)
-        if err != nil {
-            handler.Host.Log(api.LogLevelError,
-                fmt.Sprintf("test %q eval error: %v", tc.Name, err))
-            os.Exit(1)
-        }
-        if result != tc.Expect {
-            handler.Host.Log(api.LogLevelError,
-                fmt.Sprintf("test %q failed: got %v, expected %v", tc.Name, result, tc.Expect))
-            os.Exit(1)
-        }
-        handler.Host.Log(api.LogLevelInfo, fmt.Sprintf("test %q passed", tc.Name))
-    }
-
-    mw := &AuthzMiddleware{program: program, config: config}
-    handler.HandleRequestFn = mw.handleRequest
-}
-```
-
-### 6.5 Startup Flow (Rust)
+### 6.3 Startup Flow
 
 ```rust
 fn main() {
@@ -672,31 +545,7 @@ fn main() {
 }
 ```
 
-### 6.6 Request Handler (Go)
-
-```go
-func (m *AuthzMiddleware) handleRequest(req api.Request, resp api.Response) (next bool, reqCtx uint32) {
-    ctx := NewRequestContextFromAPI(req)
-
-    allowed, err := m.program.Eval(ctx)
-    if err != nil {
-        handler.Host.Log(api.LogLevelError, "expression eval error: "+err.Error())
-        resp.SetStatusCode(uint32(500))
-        resp.Body().WriteString("Internal Server Error")
-        return false, 0
-    }
-
-    if !allowed {
-        resp.SetStatusCode(uint32(m.config.DenyStatusCode))
-        resp.Body().WriteString(m.config.DenyBody)
-        return false, 0
-    }
-
-    return true, 0
-}
-```
-
-### 6.7 Request Handler (Rust)
+### 6.4 Request Handler
 
 ```rust
 impl Guest for AuthzPlugin {
@@ -721,20 +570,20 @@ impl Guest for AuthzPlugin {
 }
 ```
 
-### 6.8 Expression Engine Design
+### 6.5 Expression Engine Design
 
-The expression engine is a standard four-phase pipeline, identical in either language:
+The expression engine is a standard four-phase pipeline:
 
 1. **Lexer**: Converts the expression string into a stream of tokens. Token types: `STRING`, `IDENT`, `LPAREN`, `RPAREN`, `COMMA`, `OP_EQ`, `OP_NEQ`, `OP_STARTS_WITH`, `OP_ENDS_WITH`, `OP_CONTAINS`, `OP_MATCHES`, `KW_AND`, `KW_OR`, `KW_NOT`, `EOF`.
 2. **Parser**: Recursive-descent parser that consumes the token stream and produces an AST. The grammar is defined in Section 4.1. Parser errors include the token position for diagnostics.
-3. **Compiler**: Walks the AST and performs type checking. Verifies that operators receive the correct types, that the top-level expression is `bool`, and that function calls have the correct arity and argument types. Returns a `Program` or a type error with location. In Rust, the type system enforces exhaustive handling of all AST variants at compile time. In Go, this must be enforced by convention and testing.
+3. **Compiler**: Walks the AST and performs type checking. Verifies that operators receive the correct types, that the top-level expression is `bool`, and that function calls have the correct arity and argument types. Returns a `Program` or a type error with location. Rust's type system enforces exhaustive handling of all AST variants at compile time.
 4. **Evaluator**: Walks the type-checked AST with a `RequestContext`, evaluating each node. Since the AST is already type-checked, the evaluator contains minimal error paths (primarily regex compilation errors for `matches`, which could optionally be moved to compile time).
 
-In both languages, the engine operates on concrete types (`string`, `[]string`/`Vec<String>`, `bool`) with **zero use of `reflect`** (Go) or dynamic dispatch (Rust). This is critical for TinyGo compatibility and for Rust is simply idiomatic.
+The engine operates on concrete types (`string`, `Vec<String>`, `bool`) with no dynamic dispatch, making it efficient and type-safe.
 
-### 6.9 Regex Handling
+### 6.6 Regex Handling
 
-The `matches` operator compiles the regex pattern at evaluation time or, preferably, at compile time for string-literal patterns. Both Go’s `regexp` package and Rust’s `regex` crate implement the RE2 algorithm, guaranteeing linear-time matching with no catastrophic backtracking. Regex patterns that are string literals should be compiled once during the `Compile` phase and cached in the AST node to avoid per-request compilation overhead.
+The `matches` operator compiles the regex pattern at evaluation time or, preferably, at compile time for string-literal patterns. Rust's `regex` crate implements the RE2 algorithm, guaranteeing linear-time matching with no catastrophic backtracking. Regex patterns that are string literals should be compiled once during the `Compile` phase and cached in the AST node to avoid per-request compilation overhead.
 
 -----
 
@@ -919,10 +768,10 @@ The plugin trusts headers as presented by the upstream middleware. It is the ope
 ## 10. Performance Considerations
 
 - **Expression compilation** happens once at startup. There is no per-request parsing.
-- **Header access** via the http-wasm ABI involves copying bytes across the WASM boundary. The plugin reads only the headers referenced in the expression (determined at compile time, if desired, as a future optimization). As a first implementation, headers are read lazily: `header()`, `headerValues()`, and `headerList()` call into the ABI on demand rather than pre-fetching all headers.
+- **Header access** via the http-wasm ABI involves copying bytes across the WASM boundary. The plugin reads only the headers referenced in the expression. Headers are read lazily: `header()`, `headerValues()`, and `headerList()` call into the ABI on demand rather than pre-fetching all headers.
 - **Regex patterns** with string-literal arguments are compiled once at startup and reused.
-- **Memory:** The `RequestContext` is allocated per-request and is small (a few strings and a map). No persistent memory growth across requests. In Rust, memory is freed deterministically at the end of each request handler. In Go (TinyGo), the garbage collector handles cleanup, with a small runtime overhead.
-- **Binary size:** Rust will produce significantly smaller WASM binaries (estimated 50–200 KB vs. 500 KB–1 MB for TinyGo), which affects plugin load time at Traefik startup.
+- **Memory:** The `RequestContext` is allocated per-request and is small (a few strings and a map). No persistent memory growth across requests. Memory is freed deterministically at the end of each request handler.
+- **Binary size:** The compiled WASM binary is approximately 200 KB, resulting in fast plugin load times at Traefik startup.
 
 -----
 
@@ -960,10 +809,44 @@ These items are explicitly **out of scope** for v1 but are worth noting for futu
 
 -----
 
-## 13. Open Questions
+## 13. Design Decisions & Resolutions
 
-1. **Implementation language: Go (TinyGo) or Rust?** See Section 5 for detailed comparison. Rust is the stronger technical fit; Go has lower ramp-up cost for the current team. This project is well-scoped enough to serve as a Rust learning opportunity if the team is interested.
-2. **Should `matches` regex patterns be restricted to string literals only?** This would allow all regexes to be compiled at startup, eliminating any per-request regex compilation. The cost is that you cannot match against a dynamically constructed pattern (which is an unlikely use case in authZ).
-3. **Should the `contains` operator be renamed when used as infix string-contains vs. function list-contains?** The current design overloads `contains` based on type context. An alternative is to use `has` for substring check and `contains` only for list membership. The overloading may confuse users.
-4. **Should the plugin strip the `X-Auth-*` headers after evaluation?** This would prevent downstream services from seeing authentication metadata. This is a policy decision that may be better handled by a separate Traefik middleware (headers transform).
-5. **How should the expression language handle multi-valued headers?** Currently `header()` returns the first value and `headerValues()` returns all values. The http-wasm ABI supports multi-valued headers natively. Is this sufficient, or should there be a `headerJoin(name, separator)` function?
+This section documents key design decisions that were made during implementation.
+
+### 13.1 Implementation Language (Resolved: Rust)
+
+**Decision:** Rust was chosen as the implementation language.
+
+**Rationale:** Rust's `enum` with exhaustive pattern matching, first-class WASM support, smaller binary sizes, and lack of garbage collector made it the ideal choice for implementing a custom expression language. See Section 5 for detailed analysis.
+
+### 13.2 Regex Pattern Compilation (Resolved: Compile at Startup)
+
+**Decision:** Regex patterns that are string literals are compiled once at startup and cached in the AST.
+
+**Rationale:** This eliminates per-request regex compilation overhead for the common case while still supporting dynamic patterns if needed in the future. The current implementation focuses on string-literal patterns.
+
+### 13.3 Contains Operator Overloading (Resolved: Keep Overloading)
+
+**Decision:** The `contains` operator remains overloaded: infix for string substring checks, function for list membership.
+
+**Rationale:** The type system disambiguates the two uses at compile time. While this could be confusing for users, the alternative of introducing separate operators (`has` vs `contains`) would add complexity to the language for limited benefit. The documentation clearly explains both uses.
+
+### 13.4 Header Stripping (Deferred)
+
+**Question:** Should the plugin strip `X-Auth-*` headers after evaluation to prevent downstream services from seeing authentication metadata?
+
+**Status:** Not implemented. This is a policy decision that is better handled by a separate Traefik middleware (headers transform). Keeping authorization logic separate from header manipulation makes the plugin more flexible and easier to compose with other middleware.
+
+### 13.5 Multi-Valued Header Handling (Resolved: Three Functions)
+
+**Decision:** The expression language provides three header access functions:
+- `header(name)` - returns the first value
+- `headerValues(name)` - returns all values as a list
+- `headerList(name)` - splits the first value by comma
+
+**Rationale:** This covers the common use cases:
+- Single-valued headers (e.g., `X-Auth-User-Login`)
+- Multi-valued headers (e.g., multiple `Set-Cookie` headers)
+- Comma-separated lists within a single header (e.g., `X-Auth-User-Teams: "platform-eng,sre"`)
+
+A `headerJoin(name, separator)` function was not needed for the initial implementation.

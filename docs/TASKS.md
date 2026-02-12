@@ -299,10 +299,19 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [ ] Remove host port exposure, or bind exposed ports to `127.0.0.1` only
 - [ ] Eliminate dependency on specific host port availability (8080, 8081)
 
-## Phase 18: Clean Up Docs
-- [ ] Review `docs/DESIGN.md` for references to "team" or work context (lines ~447, ~966 mention "Go developers" team)
-- [ ] Rewrite any language that frames this as a team/work project — this is a personal project
-- [ ] update the open questions based on how we implemented things. We definitely chose Rust, etc.
+## Phase 18: Clean Up Docs ✅
+- [x] Review `docs/DESIGN.md` for references to "team" or work context (lines ~447, ~966 mention "Go developers" team)
+- [x] Rewrite any language that frames this as a team/work project — this is a personal project
+- [x] Update the open questions based on how we implemented things. We definitely chose Rust, etc.
+- [x] Update Section 2.1 to reflect Rust implementation choice
+- [x] Update Section 2.3 to remove Go dependencies
+- [x] Update Section 2.4 to show only Rust build command
+- [x] Rewrite Section 5 from "decision required" to "decision made: Rust"
+- [x] Consolidate Section 6 to remove Go code examples
+- [x] Update Section 10 to reflect actual binary size
+- [x] Completely rewrite Section 13 "Open Questions" to "Design Decisions & Resolutions"
+- [x] Document all resolved decisions (Rust, regex compilation, contains overloading, header handling)
+- [x] Update module name reference to be more generic
 
 ## Phase 19: Review Plugin Manifest
 - [ ] Audit `.traefik.yml` against Traefik plugin catalog requirements. Read https://raw.githubusercontent.com/traefik/plugindemowasm/refs/heads/main/readme.md
@@ -328,6 +337,6 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 
 ## Progress Summary
 - **Total Phases:** 22
-- **Completed Phases:** 14
-- **Current Phase:** 15–22 (planned, not started)
-- **Overall Progress:** 14/22 phases complete (64%)
+- **Completed Phases:** 18
+- **Current Phase:** 19–22 (planned, not started)
+- **Overall Progress:** 18/22 phases complete (82%)
