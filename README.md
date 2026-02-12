@@ -8,25 +8,16 @@ A Traefik middleware plugin that performs attribute-based authorization on HTTP 
 
 ## Overview
 
-This plugin enables fine-grained access control based on HTTP request attributes:
-- Request method, path, and host
-- HTTP headers (ideal for ForwardAuth integration)
-- Custom expression language with type safety
-- Built-in test framework for validation at startup
+This plugin enables fine-grained access control based on HTTP request attributes (method, path, host, headers) using a custom expression language. Expressions are compiled and type-checked at Traefik startup, catching configuration errors before they reach production.
 
-## Features
-
-- **Expression-based authorization**: Define complex access rules using a simple, powerful expression language
-- **Type-safe compilation**: Expressions are compiled and type-checked at Traefik startup - catch errors before they hit production
-- **Built-in testing framework**: Test cases validated at startup - Traefik won't start with invalid config
-- **Fail-closed security**: Any evaluation errors result in request denial (HTTP 500)
-- **Minimal overhead**: Compiled WASM binary (~960 KB) with fast runtime evaluation
-- **Case-insensitive headers**: All header lookups are case-insensitive for HTTP/1.1 and HTTP/2 compatibility
-- **Rich built-in functions**: Header access, array operations, regex matching, and more
+**Key Features:**
+- Type-safe expression language with compile-time validation
+- Built-in test framework validated at startup
+- Fail-closed security model (errors deny access)
+- Case-insensitive header lookups
+- Minimal overhead (compiled WASM)
 
 ## Quick Start
-
-### Configuration
 
 ```yaml
 http:
@@ -57,18 +48,12 @@ http:
 - `path` - Request path
 - `host` - Request host
 
-### Comparison Operators
-- `==` - String equality
-- `!=` - String inequality
-- `startsWith` - String prefix match
-- `endsWith` - String suffix match
+### Operators
+- `==`, `!=` - String equality/inequality
+- `startsWith`, `endsWith` - String prefix/suffix match
 - `contains` - Substring match
 - `matches` - Regex match (RE2 syntax)
-
-### Boolean Operators
-- `AND` - Logical AND
-- `OR` - Logical OR
-- `NOT` - Logical NOT
+- `AND`, `OR`, `NOT` - Boolean operators
 
 ### Built-in Functions
 - `header(name)` - Get first header value (empty string if missing)
@@ -78,143 +63,53 @@ http:
 - `anyOf(list, item1, item2, ...)` - Check if array contains any of the items
 - `allOf(list, item1, item2, ...)` - Check if array contains all of the items
 
-### Expression Examples
+### Examples
 
 ```
-# Simple method check
+# Method check
 method == "GET"
 
 # Path-based access
 path startsWith "/api/admin"
 
-# Header-based authorization
+# Team membership
 contains(headerList("X-Auth-User-Teams"), "platform-eng")
 
-# Complex boolean logic
+# Complex logic
 (method == "GET" OR method == "HEAD") AND path startsWith "/public"
 
-# Regex matching
+# Regex
 matches(path, "^/api/v[0-9]+/.*")
 
-# Multiple team check
+# Multiple teams
 anyOf(headerList("X-Auth-User-Teams"), "platform-eng", "devops", "sre")
 ```
 
 ## Configuration Schema
 
+**Middleware Configuration:**
 - `expression` (string, required) - Authorization expression
-- `denyStatusCode` (int, default: 403) - HTTP status code for denied requests
+- `denyStatusCode` (int, default: 403) - HTTP status for denied requests
 - `denyBody` (string, default: "Forbidden") - Response body for denied requests
 - `tests` (array, optional) - Test cases validated at startup
 
-### Test Case Schema
-
-- `name` (string) - Descriptive test name
-- `request` (object) - Mock request
-  - `method` (string, optional) - HTTP method
-  - `path` (string, optional) - Request path
-  - `host` (string, optional) - Request host
-  - `headers` (map, optional) - Request headers
-- `expect` (boolean) - Expected authorization result (true = allow, false = deny)
-
-## Build Instructions
-
-### Prerequisites
-
-- Rust toolchain (stable)
-- `wasm32-wasip1` target: `rustup target add wasm32-wasip1`
-
-### Building
-
-```bash
-# Debug build
-make build
-
-# Release build (optimized, < 200 KB)
-make release
-
-# Run tests
-make test
-
-# Lint and format check
-make check
-```
-
-## Integration Testing
-
-Docker-based integration tests are in `integration-test/`. To run:
-
-```bash
-make release
-cd integration-test
-./setup-plugin.sh
-docker compose up -d
-./test.sh
-docker compose down
-```
-
-See `integration-test/README.md` for full details.
-
-## Development
-
-See `docs/DESIGN.md` for comprehensive design documentation.
-
-See `docs/TASKS.md` for implementation progress tracking.
+**Test Case Schema:**
+- `name` (string) - Test description
+- `request` (object) - Mock request with `method`, `path`, `host`, `headers`
+- `expect` (boolean) - Expected result (true = allow, false = deny)
 
 ## Examples
 
-See the [`examples/`](examples/) directory for complete Traefik configuration examples:
+Complete Traefik configurations in [`examples/`](examples/):
+- [team-based-access.yml](examples/team-based-access.yml) - Team membership authorization
+- [path-restrictions.yml](examples/path-restrictions.yml) - API path restrictions
+- [combined-rules.yml](examples/combined-rules.yml) - Complex boolean logic
 
-- **[team-based-access.yml](examples/team-based-access.yml)** - Control access based on team membership headers
-- **[path-restrictions.yml](examples/path-restrictions.yml)** - Restrict access to specific API paths
-- **[combined-rules.yml](examples/combined-rules.yml)** - Complex boolean logic combining multiple conditions
+## Documentation
 
-## Troubleshooting
-
-### Expression Compilation Errors
-
-If Traefik fails to start with compilation errors, check:
-- Expression syntax is correct (operators, parentheses match)
-- All identifiers are valid (`method`, `path`, `host`)
-- Function names and argument counts are correct
-- Top-level expression evaluates to boolean
-
-### Test Failures at Startup
-
-When test cases fail:
-- Check that `expect` matches the actual expression result
-- Verify test request properties (method, path, host, headers)
-- Use simple expressions to isolate the issue
-- Check Traefik logs for detailed error messages
-
-### Runtime Evaluation Errors
-
-Evaluation errors return HTTP 500:
-- Usually caused by invalid regex patterns in `matches()` operator
-- Check Traefik logs for detailed error messages
-- All other type errors are caught at compile time
-
-## Performance
-
-- Expression compilation happens once at Traefik startup
-- Runtime evaluation is fast (compiled AST, not interpreted)
-- Regex patterns in `matches()` are compiled on demand (consider caching optimization)
-- Boolean operators use short-circuit evaluation
-
-## Security
-
-- **Fail-closed**: Unexpected errors return HTTP 500, never allow unauthorized access
-- **Type safety**: Invalid expressions caught at compile time before any requests are processed
-- **RE2 regex**: Linear-time regex matching prevents ReDoS attacks
-- **No code injection**: Expressions are parsed into AST, not executed as code
-
-## Contributing
-
-Contributions welcome! Please:
-1. Run tests: `cargo test`
-2. Format code: `cargo fmt`
-3. Lint: `cargo clippy --target wasm32-wasip1`
-4. Ensure CI passes before submitting PR
+- **[CLAUDE.md](CLAUDE.md)** - Development workflow and contributor guide
+- **[docs/DESIGN.md](docs/DESIGN.md)** - Comprehensive design documentation
+- **[integration-test/README.md](integration-test/README.md)** - Integration testing guide
 
 ## License
 

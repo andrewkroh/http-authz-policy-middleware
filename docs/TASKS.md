@@ -283,10 +283,51 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [x] Remove obsolete `integration-test/CONFIGURATION_GUIDE.md`
 - [x] Add `integration-test/plugins-local/` to `.gitignore`
 
+## Phase 15: Simplify README and Create CLAUDE.md
+- [ ] Strip README down to core project information only
+- [ ] Remove verbose sections that belong in separate docs
+- [ ] Keep: overview, quick start config example, expression language reference, license
+- [ ] Create `CLAUDE.md` with development workflow instructions (build commands, test commands, always run `cargo fmt`, lint with clippy, integration test steps, project structure, etc.)
+
+## Phase 16: License
+- [ ] Add MIT LICENSE file to project root
+- [ ] Add MIT license headers to all Rust source files (`src/**/*.rs`)
+- [ ] Add automated check to ensure all files have MIT header
+
+## Phase 17: Harden Integration Tests
+- [ ] Run test script inside Docker network instead of from the host
+- [ ] Remove host port exposure, or bind exposed ports to `127.0.0.1` only
+- [ ] Eliminate dependency on specific host port availability (8080, 8081)
+
+## Phase 18: Clean Up Docs
+- [ ] Review `docs/DESIGN.md` for references to "team" or work context (lines ~447, ~966 mention "Go developers" team)
+- [ ] Rewrite any language that frames this as a team/work project — this is a personal project
+- [ ] update the open questions based on how we implemented things. We definitely chose Rust, etc.
+
+## Phase 19: Review Plugin Manifest
+- [ ] Audit `.traefik.yml` against Traefik plugin catalog requirements. Read https://raw.githubusercontent.com/traefik/plugindemowasm/refs/heads/main/readme.md
+- [ ] Ensure all required fields are present (`displayName`, `type`, `runtime`, `summary`, `testData`)
+- [ ] Verify `testData` config is valid and passes Traefik's startup validation
+
+## Phase 20: Changelog System
+- [ ] Set up automatic changelog generation for releases
+- [ ] Changelog message are included into a directory with their accompanying PR
+- [ ] Choose tooling (e.g., conventional commits, git-cliff, release-please)
+
+## Phase 21: Release Workflow
+- [ ] Create GitHub Actions release workflow
+- [ ] Package `plugin.wasm` and `.traefik.yml` into a zip archive per Traefik plugin catalog guidelines. See https://raw.githubusercontent.com/traefik/plugindemowasm/refs/heads/main/readme.md
+- [ ] Attach zip to GitHub release assets
+- [ ] Tag-based trigger (on version tags)
+- [ ] Create GH release with automatic generated release notes.
+
+## Phase 22: Rewrite Git History
+- [ ] Rewrite all commit author/committer fields to use personal account (not work account)
+- [ ] Force push rewritten history
 ---
 
 ## Progress Summary
-- **Total Phases:** 14
+- **Total Phases:** 22
 - **Completed Phases:** 14
-- **Current Phase:** Complete! All phases finished
-- **Overall Progress:** 14/14 phases complete (100%)
+- **Current Phase:** 15–22 (planned, not started)
+- **Overall Progress:** 14/22 phases complete (64%)
