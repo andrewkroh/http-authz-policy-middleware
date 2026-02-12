@@ -327,6 +327,37 @@ Update these files for developer workflow changes:
 - **CLAUDE.md**: Development workflow, build instructions, troubleshooting
 - **docs/DESIGN.md**: Architecture, design decisions, implementation details
 
+## Releases
+
+### For Maintainers
+
+Releases are automated via GitHub Actions when version tags are pushed. See [CLAUDE.md - Release Process](CLAUDE.md#release-process) for complete instructions.
+
+**Quick Release Steps:**
+1. Ensure all tests pass and commits follow conventional format
+2. Update version in `Cargo.toml` (e.g., `version = "0.2.0"`)
+3. Create and push a version tag:
+   ```bash
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+4. GitHub Actions will automatically:
+   - Build the WASM plugin
+   - Generate changelog
+   - Create GitHub Release with plugin package
+   - Update CHANGELOG.md
+
+**Tag Format:** Must follow semantic versioning with `v` prefix (e.g., `v0.1.0`, `v1.2.3`)
+
+### For Contributors
+
+Contributors do not create releases. Maintainers will:
+- Review and merge your PRs
+- Include changes in the next release
+- Credit you in the automated changelog (based on git commits)
+
+Your commit messages following conventional commit format ensure your contributions are properly documented in release notes.
+
 ## Questions?
 
 - Open a [GitHub Discussion](../../discussions) for questions

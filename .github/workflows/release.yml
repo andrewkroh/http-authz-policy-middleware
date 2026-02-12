@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for changelog generation
+
+      - name: Validate tag format
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Creating release for tag: $TAG"
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Tag must follow semantic versioning (e.g., v1.2.3)"
+            exit 1
+          fi
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release WASM
+        run: |
+          echo "Building WASM plugin..."
+          cargo build --target wasm32-wasip1 --release
+          cp target/wasm32-wasip1/release/traefik_authz_wasm.wasm plugin.wasm
+          ls -lh plugin.wasm
+          SIZE=$(stat -c%s plugin.wasm)
+          SIZE_KB=$((SIZE / 1024))
+          echo "Binary size: ${SIZE_KB} KB"
+
+      - name: Install git-cliff
+        run: cargo install git-cliff
+
+      - name: Generate changelog for release
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Generating changelog for $TAG..."
+          git cliff --tag "$TAG" --prepend CHANGELOG.md
+
+          # Extract changelog entry for this release (for release notes)
+          git cliff --tag "$TAG" --unreleased --strip all > release-notes.md
+
+          echo "=== Release Notes Preview ==="
+          cat release-notes.md
+
+      - name: Package plugin for Traefik catalog
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          ARCHIVE_NAME="http-authz-policy-middleware-${TAG}.zip"
+
+          echo "Creating plugin package: $ARCHIVE_NAME"
+          zip -j "$ARCHIVE_NAME" plugin.wasm .traefik.yml
+
+          echo "Package contents:"
+          unzip -l "$ARCHIVE_NAME"
+
+          ls -lh "$ARCHIVE_NAME"
+
+          # Save archive name for later steps
+          echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.ARCHIVE_NAME }}
+            plugin.wasm
+            .traefik.yml
+            CHANGELOG.md
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG.md in repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if CHANGELOG.md was updated
+          if git diff --quiet CHANGELOG.md; then
+            echo "No changelog changes to commit"
+          else
+            git add CHANGELOG.md
+            git commit -m "chore(release): update CHANGELOG.md for ${GITHUB_REF#refs/tags/}"
+            git push origin HEAD:main || echo "Note: Could not push changelog update to main branch"
+          fi
+
+      - name: Release summary
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** $TAG" >> $GITHUB_STEP_SUMMARY
+          echo "**Archive:** ${{ env.ARCHIVE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- \`plugin.wasm\` - Compiled WASM plugin" >> $GITHUB_STEP_SUMMARY
+          echo "- \`.traefik.yml\` - Plugin manifest" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.ARCHIVE_NAME }}\` - Complete plugin package (for Traefik catalog)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`CHANGELOG.md\` - Full project changelog" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Verify release artifacts on GitHub Releases page" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test the plugin package with Traefik" >> $GITHUB_STEP_SUMMARY
+          echo "3. Submit to Traefik Plugin Catalog (if desired)" >> $GITHUB_STEP_SUMMARY
