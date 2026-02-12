@@ -113,34 +113,34 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [x] Verify: All tests pass (38 tests passing)
 - [x] Commit Phase 6 changes
 
-## Phase 7: Expression Language - Evaluator
-- [ ] Create src/expr/eval.rs
-- [ ] Define Value enum (Str, StrList, Bool)
-- [ ] Define EvalError struct
-- [ ] Implement Program::eval(&self, ctx: &RequestContext) → Result<bool, EvalError>
-- [ ] Implement eval_expr() recursive function
-- [ ] Add evaluation for Ident::Method → ctx.method
-- [ ] Add evaluation for Ident::Path → ctx.path
-- [ ] Add evaluation for Ident::Host → ctx.host
-- [ ] Add evaluation for BinOp::Eq (string equality)
-- [ ] Add evaluation for BinOp::Neq (string inequality)
-- [ ] Add evaluation for BinOp::StartsWith
-- [ ] Add evaluation for BinOp::EndsWith
-- [ ] Add evaluation for BinOp::Contains (substring)
-- [ ] Add evaluation for BinOp::Matches (regex - compile on demand)
-- [ ] Add evaluation for And/Or/Not boolean operators
-- [ ] Implement header(name) function
-- [ ] Implement headerValues(name) function
-- [ ] Implement headerList(name) function (comma-separated split)
-- [ ] Implement contains(list, item) function
-- [ ] Implement anyOf(list, ...items) function
-- [ ] Implement allOf(list, ...items) function
-- [ ] Add unit test: all built-in functions
-- [ ] Add unit test: all comparison operators
-- [ ] Add unit test: regex matching (valid and invalid patterns)
-- [ ] Add integration test: compile + eval full expressions
-- [ ] Verify: All tests pass
-- [ ] Commit Phase 7 changes
+## Phase 7: Expression Language - Evaluator ✅
+- [x] Create src/expr/eval.rs
+- [x] Define Value enum (Str, StrList, Bool)
+- [x] Define EvalError struct
+- [x] Implement Program::eval(&self, ctx: &RequestContext) → Result<bool, EvalError>
+- [x] Implement eval_expr() recursive function
+- [x] Add evaluation for Ident::Method → ctx.method
+- [x] Add evaluation for Ident::Path → ctx.path
+- [x] Add evaluation for Ident::Host → ctx.host
+- [x] Add evaluation for BinOp::Eq (string equality)
+- [x] Add evaluation for BinOp::Neq (string inequality)
+- [x] Add evaluation for BinOp::StartsWith
+- [x] Add evaluation for BinOp::EndsWith
+- [x] Add evaluation for BinOp::Contains (substring)
+- [x] Add evaluation for BinOp::Matches (regex - compile on demand)
+- [x] Add evaluation for And/Or/Not boolean operators
+- [x] Implement header(name) function
+- [x] Implement headerValues(name) function
+- [x] Implement headerList(name) function (comma-separated split)
+- [x] Implement contains(list, item) function
+- [x] Implement anyOf(list, ...items) function
+- [x] Implement allOf(list, ...items) function
+- [x] Add unit test: all built-in functions
+- [x] Add unit test: all comparison operators
+- [x] Add unit test: regex matching (valid and invalid patterns)
+- [x] Add integration test: compile + eval full expressions
+- [x] Verify: All tests pass
+- [x] Commit Phase 7 changes
 
 ## Phase 8: HTTP Request Handler and Plugin Entrypoint
 - [ ] Update src/main.rs with complete implementation
@@ -270,9 +270,9 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 
 ## Progress Summary
 - **Total Phases:** 13
-- **Completed Phases:** 6
-- **Current Phase:** Phase 7 - Expression Language Evaluator
-- **Overall Progress:** 6/13 phases complete (46.2%)
+- **Completed Phases:** 7
+- **Current Phase:** Phase 8 - HTTP Request Handler and Plugin Entrypoint
+- **Overall Progress:** 7/13 phases complete (53.8%)
 
 ---
 
