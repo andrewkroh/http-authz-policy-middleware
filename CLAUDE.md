@@ -15,6 +15,7 @@ This document provides comprehensive development workflow instructions for contr
 - [Performance Considerations](#performance-considerations)
 - [Security Considerations](#security-considerations)
 - [Troubleshooting](#troubleshooting)
+- [Git History Rewrite](#git-history-rewrite)
 - [Contributing](#contributing)
   - [Commit Message Guidelines](#commit-message-guidelines)
   - [Changelog Management](#changelog-management)
@@ -560,6 +561,80 @@ cargo build --target wasm32-wasip1
 - Enable debug logging in Traefik
 - Add more test cases to narrow down issue
 - Test expression in isolation
+
+## Git History Rewrite
+
+This repository's Git history has been rewritten to use a personal account instead of the original corporate/work email. All commits now use:
+
+- **Name:** Andrew Kroh
+- **Email:** id-github@andrewkroh.com
+
+### What Was Changed
+
+The history rewrite updated both author and committer fields for ALL commits in the repository while preserving:
+- Commit messages
+- Commit timestamps (author date and committer date)
+- File changes and diffs
+- Branch structure
+- All other metadata
+
+### How It Was Done
+
+A script was created at `/workspace/scripts/rewrite-history.sh` to perform the rewrite safely:
+
+1. **Backup Created** - A backup branch (`backup-before-rewrite`) was created before any changes
+2. **History Rewritten** - Used `git filter-branch` to update all author/committer information
+3. **Verification** - Validated that all commits now use the new identity
+4. **Force Push** - Updated the remote repository (all commit SHAs changed)
+
+### Using the Rewrite Script
+
+The script supports two modes:
+
+**Preview Mode (Default):**
+```bash
+./scripts/rewrite-history.sh preview
+# OR simply
+./scripts/rewrite-history.sh
+```
+
+This shows:
+- Current authors and committers
+- What will change
+- Total number of commits to rewrite
+- No actual changes are made
+
+**Rewrite Mode:**
+```bash
+./scripts/rewrite-history.sh rewrite
+```
+
+This:
+- Creates a backup branch
+- Rewrites all history
+- Verifies the changes
+- Provides next steps for force pushing
+
+### Important Notes for Collaborators
+
+If you have an existing clone of this repository:
+
+1. **DO NOT** try to pull or merge - your history is incompatible
+2. **Backup** any local work (stash or create branches)
+3. **Re-clone** the repository from scratch
+4. **Reapply** any local work to the new clone
+
+Any open pull requests will need to be recreated since the base branch history has changed.
+
+### Why Rewrite History?
+
+History rewrites are typically done to:
+- Update author identity (work email → personal email)
+- Remove sensitive data (passwords, keys)
+- Clean up commit messages
+- Consolidate authorship
+
+In this case, the rewrite ensures all contributions are attributed to the personal GitHub account.
 
 ## Contributing
 
