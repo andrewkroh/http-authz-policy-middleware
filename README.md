@@ -117,8 +117,17 @@ See [integration-test/README.md](integration-test/README.md) for integration tes
 ## Documentation
 
 - **[CLAUDE.md](CLAUDE.md)** - Development workflow and contributor guide
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contributing guidelines and changelog system
 - **[docs/DESIGN.md](docs/DESIGN.md)** - Comprehensive design documentation
 - **[integration-test/README.md](integration-test/README.md)** - Integration testing guide
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+- Setting up your development environment
+- Writing conventional commit messages for automatic changelog generation
+- Submitting pull requests
+- Running tests
 
 ## License
 

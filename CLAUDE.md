@@ -16,6 +16,8 @@ This document provides comprehensive development workflow instructions for contr
 - [Security Considerations](#security-considerations)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
+  - [Commit Message Guidelines](#commit-message-guidelines)
+  - [Changelog Management](#changelog-management)
 
 ## Project Overview
 
@@ -56,11 +58,24 @@ This is a Traefik v3 middleware plugin compiled to WebAssembly (WASM) that perfo
 │   ├── test.sh                 # Integration test script
 │   └── README.md               # Integration testing documentation
 ├── examples/                   # Example Traefik configurations
+├── scripts/
+│   ├── check-license.sh        # License header validation
+│   └── generate-changelog.sh   # Changelog generation helper
 ├── docs/
 │   ├── DESIGN.md               # Comprehensive design documentation
-│   └── TASKS.md                # Implementation progress tracking
+│   ├── TASKS.md                # Implementation progress tracking
+│   └── CHANGELOG_SYSTEM.md     # Changelog system documentation
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml              # CI/CD pipeline
+│   │   └── changelog.yml       # Changelog generation workflow
+│   └── CHANGELOG_GUIDE.md      # Quick changelog reference
 ├── Cargo.toml                  # Rust dependencies and build config
 ├── Makefile                    # Build automation
+├── cliff.toml                  # git-cliff configuration for changelog generation
+├── CHANGELOG.md                # Project changelog (auto-generated)
+├── CONTRIBUTING.md             # Contributing guidelines
+├── LICENSE                     # MIT license
 ├── .traefik.yml                # Traefik plugin manifest
 └── README.md                   # User-facing documentation
 
@@ -566,6 +581,19 @@ test: add test cases for regex matching
 refactor: simplify parser error handling
 ```
 
+**Conventional Commit Types:**
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation changes
+- `test:` - Test additions or modifications
+- `refactor:` - Code refactoring without feature changes
+- `perf:` - Performance improvements
+- `style:` - Code style changes (formatting, etc.)
+- `chore:` - Build system, dependencies, or other maintenance tasks
+- `ci:` - CI/CD configuration changes
+
+These commit messages are used to automatically generate changelogs using git-cliff.
+
 ### Pull Request Process
 
 1. Fork the repository
@@ -586,15 +614,55 @@ refactor: simplify parser error handling
 - Test coverage
 - Documentation completeness
 
+### Changelog Management
+
+This project uses [git-cliff](https://git-cliff.org/) for automatic changelog generation based on conventional commits.
+
+**View Current Changelog:**
+```bash
+# View the current CHANGELOG.md
+cat CHANGELOG.md
+```
+
+**Generate Changelog for Unreleased Changes:**
+```bash
+# Install git-cliff (if not already installed)
+cargo install git-cliff
+
+# Generate changelog for unreleased commits
+git cliff --unreleased --prepend CHANGELOG.md
+
+# Preview without writing
+git cliff --unreleased
+```
+
+**Generate Changelog for New Release:**
+```bash
+# Generate changelog for a specific tag
+git cliff --tag v0.2.0 --prepend CHANGELOG.md
+
+# Generate changelog for all releases
+git cliff --prepend CHANGELOG.md
+```
+
+**Configuration:**
+- Changelog configuration is in `cliff.toml`
+- Follows conventional commit format
+- Automatically categorizes commits by type (feat, fix, docs, etc.)
+- Skips non-conventional commits and dependency updates
+
+**Note:** The changelog is automatically updated during the release process by GitHub Actions. Manual updates are only needed for local testing or preview purposes.
+
 ### Resources
 
 - **http-wasm ABI**: https://http-wasm.io/http-handler-abi/
 - **Traefik Plugins**: https://doc.traefik.io/traefik/plugins/overview/
 - **Rust WASM Book**: https://rustwasm.github.io/docs/book/
 - **Design Document**: [docs/DESIGN.md](docs/DESIGN.md)
+- **git-cliff Documentation**: https://git-cliff.org/
 
 ---
 
-**Last Updated**: 2025-02-12
+**Last Updated**: 2026-02-12
 
 For questions or issues, please open a GitHub issue or discussion.

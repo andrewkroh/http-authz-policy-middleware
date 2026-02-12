@@ -318,10 +318,16 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [ ] Ensure all required fields are present (`displayName`, `type`, `runtime`, `summary`, `testData`)
 - [ ] Verify `testData` config is valid and passes Traefik's startup validation
 
-## Phase 20: Changelog System
-- [ ] Set up automatic changelog generation for releases
-- [ ] Changelog message are included into a directory with their accompanying PR
-- [ ] Choose tooling (e.g., conventional commits, git-cliff, release-please)
+## Phase 20: Changelog System ✅
+- [x] Set up automatic changelog generation for releases
+- [x] Choose tooling: git-cliff (lightweight, Rust-based, conventional commits)
+- [x] Create cliff.toml configuration file
+- [x] Create initial CHANGELOG.md with Keep a Changelog format
+- [x] Add GitHub Actions workflow for changelog generation
+- [x] Create CONTRIBUTING.md with detailed changelog guidelines
+- [x] Document changelog system in CLAUDE.md
+- [x] Create helper script: scripts/generate-changelog.sh
+- [x] Update README.md with contributing section
 
 ## Phase 21: Release Workflow
 - [ ] Create GitHub Actions release workflow
@@ -337,6 +343,6 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 
 ## Progress Summary
 - **Total Phases:** 22
-- **Completed Phases:** 18
-- **Current Phase:** 19–22 (planned, not started)
-- **Overall Progress:** 18/22 phases complete (82%)
+- **Completed Phases:** 19
+- **Current Phase:** 21–22 (planned, not started)
+- **Overall Progress:** 19/22 phases complete (86%)
