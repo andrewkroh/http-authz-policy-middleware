@@ -180,9 +180,7 @@ impl<'de> Deserialize<'de> for TestRequest {
                     method: method.unwrap_or_default(),
                     path: path.unwrap_or_default(),
                     host: host.unwrap_or_default(),
-                    headers: headers
-                        .map(|h| h.into_map())
-                        .unwrap_or_default(),
+                    headers: headers.map(|h| h.into_map()).unwrap_or_default(),
                 })
             }
         }
