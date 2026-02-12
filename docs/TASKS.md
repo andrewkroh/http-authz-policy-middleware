@@ -2,91 +2,91 @@
 
 This document tracks the implementation progress of the Traefik WASM Authorization Middleware Plugin.
 
-## Phase 1: Project Scaffolding
-- [ ] Create Cargo.toml with dependencies (http-wasm-guest, serde, serde_json, regex)
-- [ ] Create .traefik.yml plugin manifest
-- [ ] Create Makefile with build, test, clean, release targets
-- [ ] Create README.md with project overview
-- [ ] Create .gitignore for Rust/WASM projects
-- [ ] Create src/main.rs with minimal stub
-- [ ] Verify: `cargo build --target wasm32-wasip1` succeeds
-- [ ] Commit Phase 1 changes
+## Phase 1: Project Scaffolding ✅
+- [x] Create Cargo.toml with dependencies (http-wasm-guest, serde, serde_json, regex)
+- [x] Create .traefik.yml plugin manifest
+- [x] Create Makefile with build, test, clean, release targets
+- [x] Create README.md with project overview
+- [x] Create .gitignore for Rust/WASM projects
+- [x] Create src/lib.rs with minimal stub (renamed from main.rs)
+- [x] Verify: `cargo build --target wasm32-wasip1` succeeds
+- [x] Commit Phase 1 changes
 
-## Phase 2: GitHub Actions CI/CD Workflow
-- [ ] Create .github/workflows/ci.yml
-- [ ] Configure build-and-test job (checkout, install Rust, cache, fmt, clippy, test, build)
-- [ ] Configure workflow triggers (push to main, PRs, manual dispatch)
-- [ ] Add binary size reporting
-- [ ] Verify workflow is valid YAML
-- [ ] Commit and verify workflow triggers successfully
-- [ ] Add workflow badge to README.md
+## Phase 2: GitHub Actions CI/CD Workflow ✅
+- [x] Create .github/workflows/ci.yml
+- [x] Configure build-and-test job (checkout, install Rust, cache, fmt, clippy, test, build)
+- [x] Configure workflow triggers (push to main, PRs, manual dispatch)
+- [x] Add binary size reporting
+- [x] Verify workflow is valid YAML
+- [x] Commit and verify workflow triggers successfully
+- [x] Add workflow badge to README.md
 
-## Phase 3: Configuration and Data Structures
-- [ ] Create src/config.rs
-- [ ] Implement Config struct (expression, deny_status_code, deny_body, tests)
-- [ ] Implement TestCase struct (name, request, expect)
-- [ ] Implement TestRequest struct (method, path, host, headers)
-- [ ] Add serde derives and default values
-- [ ] Create src/context.rs
-- [ ] Implement RequestContext struct with method, path, host fields
-- [ ] Implement headers storage (case-insensitive HashMap)
-- [ ] Implement from_request() method (http-wasm Request)
-- [ ] Implement from_test() method (TestRequest)
-- [ ] Implement header() method (get first value, case-insensitive)
-- [ ] Implement header_values() method (get all values)
-- [ ] Implement header_list() method (comma-separated parsing)
-- [ ] Add unit tests for RequestContext::from_test()
-- [ ] Add unit tests for case-insensitive header access
-- [ ] Add unit tests for Config JSON deserialization
-- [ ] Verify: All tests pass
-- [ ] Commit Phase 3 changes
+## Phase 3: Configuration and Data Structures ✅
+- [x] Create src/config.rs
+- [x] Implement Config struct (expression, deny_status_code, deny_body, tests)
+- [x] Implement TestCase struct (name, request, expect)
+- [x] Implement TestRequest struct (method, path, host, headers)
+- [x] Add serde derives and default values
+- [x] Create src/context.rs
+- [x] Implement RequestContext struct with method, path, host fields
+- [x] Implement headers storage (case-insensitive HashMap)
+- [x] Implement from_request() method (http-wasm Request) - stub for now
+- [x] Implement from_test() method (TestRequest)
+- [x] Implement header() method (get first value, case-insensitive)
+- [x] Implement header_values() method (get all values)
+- [x] Implement header_list() method (comma-separated parsing)
+- [x] Add unit tests for RequestContext::from_test()
+- [x] Add unit tests for case-insensitive header access
+- [x] Add unit tests for Config JSON deserialization
+- [x] Verify: All tests pass (10 tests passing)
+- [x] Commit Phase 3 changes
 
-## Phase 4: Expression Language - Lexer
-- [ ] Create src/expr/mod.rs module declaration
-- [ ] Create src/expr/lexer.rs
-- [ ] Define Token enum (String, Ident, LParen, RParen, Comma, operators, keywords, Eof)
-- [ ] Define LexError struct with position and message
-- [ ] Implement Lexer struct (input, pos, current_char)
-- [ ] Implement Lexer::new(input)
-- [ ] Implement advance() helper
-- [ ] Implement peek() helper
-- [ ] Implement skip_whitespace() helper
-- [ ] Implement read_string() helper (handle escaping)
-- [ ] Implement read_ident_or_keyword() helper
-- [ ] Implement next_token() method
-- [ ] Add keyword recognition (AND, OR, NOT, startsWith, endsWith, contains, matches)
-- [ ] Add unit test: tokenize `method == "GET"`
-- [ ] Add unit test: string literals with escaping
-- [ ] Add unit test: all operators (==, !=, startsWith, endsWith, contains, matches)
-- [ ] Add unit test: all keywords (AND, OR, NOT)
-- [ ] Add unit test: error cases (unterminated strings, invalid chars)
-- [ ] Verify: All tests pass
-- [ ] Commit Phase 4 changes
+## Phase 4: Expression Language - Lexer ✅
+- [x] Create src/expr/mod.rs module declaration
+- [x] Create src/expr/lexer.rs
+- [x] Define Token enum (String, Ident, LParen, RParen, Comma, operators, keywords, Eof)
+- [x] Define LexError struct with position and message
+- [x] Implement Lexer struct (input, pos, current_char)
+- [x] Implement Lexer::new(input)
+- [x] Implement advance() helper
+- [x] Implement peek() helper
+- [x] Implement skip_whitespace() helper
+- [x] Implement read_string() helper (handle escaping)
+- [x] Implement read_ident_or_keyword() helper
+- [x] Implement next_token() method
+- [x] Add keyword recognition (AND, OR, NOT, startsWith, endsWith, contains, matches)
+- [x] Add unit test: tokenize `method == "GET"`
+- [x] Add unit test: string literals with escaping
+- [x] Add unit test: all operators (==, !=, startsWith, endsWith, contains, matches)
+- [x] Add unit test: all keywords (AND, OR, NOT)
+- [x] Add unit test: error cases (unterminated strings, invalid chars)
+- [x] Verify: All tests pass (19 tests passing)
+- [x] Commit Phase 4 changes
 
-## Phase 5: Expression Language - Parser and AST
-- [ ] Create src/expr/ast.rs
-- [ ] Define Expr enum (BoolLiteral, StringLiteral, Ident, FuncCall, BinaryOp, Not, And, Or)
-- [ ] Define Ident enum (Method, Path, Host)
-- [ ] Define BinOp enum (Eq, Neq, StartsWith, EndsWith, Contains, Matches)
-- [ ] Create src/expr/parser.rs
-- [ ] Define ParseError struct with position and message
-- [ ] Implement Parser struct (lexer, current_token, peek_token)
-- [ ] Implement Parser::new() and advance() helper
-- [ ] Implement parse() entry point
-- [ ] Implement parse_expr() → parse_or_expr()
-- [ ] Implement parse_or_expr() (left-associative OR)
-- [ ] Implement parse_and_expr() (left-associative AND)
-- [ ] Implement parse_not_expr() (NOT prefix)
-- [ ] Implement parse_comparison() (binary operators)
-- [ ] Implement parse_value() (string, func_call, ident, parentheses)
-- [ ] Implement parse_func_call() (ident, args)
-- [ ] Add unit test: parse `method == "GET"`
-- [ ] Add unit test: parse `contains(headerList("X-Auth-User-Teams"), "platform-eng")`
-- [ ] Add unit test: parse `path startsWith "/api" AND method == "GET"`
-- [ ] Add unit test: complex nested expressions
-- [ ] Add unit test: error cases (unclosed paren, invalid syntax)
-- [ ] Verify: All tests pass
-- [ ] Commit Phase 5 changes
+## Phase 5: Expression Language - Parser and AST ✅
+- [x] Create src/expr/ast.rs
+- [x] Define Expr enum (BoolLiteral, StringLiteral, Ident, FuncCall, BinaryOp, Not, And, Or)
+- [x] Define Ident enum (Method, Path, Host)
+- [x] Define BinOp enum (Eq, Neq, StartsWith, EndsWith, Contains, Matches)
+- [x] Create src/expr/parser.rs
+- [x] Define ParseError struct with position and message
+- [x] Implement Parser struct (lexer, current_token, peek_token)
+- [x] Implement Parser::new() and advance() helper
+- [x] Implement parse() entry point
+- [x] Implement parse_expr() → parse_or_expr()
+- [x] Implement parse_or_expr() (left-associative OR)
+- [x] Implement parse_and_expr() (left-associative AND)
+- [x] Implement parse_not_expr() (NOT prefix)
+- [x] Implement parse_comparison() (binary operators + function-style syntax)
+- [x] Implement parse_value() (string, func_call, ident, parentheses)
+- [x] Implement parse_func_call() (ident, args)
+- [x] Add unit test: parse `method == "GET"`
+- [x] Add unit test: parse `contains(headerList("X-Auth-User-Teams"), "platform-eng")`
+- [x] Add unit test: parse `path startsWith "/api" AND method == "GET"`
+- [x] Add unit test: complex nested expressions
+- [x] Add unit test: error cases (unclosed paren, invalid syntax)
+- [x] Verify: All tests pass (28 tests passing)
+- [x] Commit Phase 5 changes
 
 ## Phase 6: Expression Language - Type Checker and Compiler
 - [ ] Create src/expr/compiler.rs
@@ -270,9 +270,9 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 
 ## Progress Summary
 - **Total Phases:** 13
-- **Completed Phases:** 0
-- **Current Phase:** Phase 1 - Project Scaffolding
-- **Overall Progress:** 1/13 phases complete (7.7%)
+- **Completed Phases:** 5
+- **Current Phase:** Phase 6 - Expression Language Type Checker and Compiler
+- **Overall Progress:** 5/13 phases complete (38.5%)
 
 ---
 
