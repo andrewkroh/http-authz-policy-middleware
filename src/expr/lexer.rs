@@ -10,22 +10,22 @@ pub enum Token {
     Ident(String),
 
     // Punctuation
-    LParen,    // (
-    RParen,    // )
-    Comma,     // ,
+    LParen, // (
+    RParen, // )
+    Comma,  // ,
 
     // Comparison operators
-    OpEq,          // ==
-    OpNeq,         // !=
-    OpStartsWith,  // startsWith
-    OpEndsWith,    // endsWith
-    OpContains,    // contains
-    OpMatches,     // matches
+    OpEq,         // ==
+    OpNeq,        // !=
+    OpStartsWith, // startsWith
+    OpEndsWith,   // endsWith
+    OpContains,   // contains
+    OpMatches,    // matches
 
     // Boolean operators (keywords)
-    KwAnd,  // AND
-    KwOr,   // OR
-    KwNot,  // NOT
+    KwAnd, // AND
+    KwOr,  // OR
+    KwNot, // NOT
 
     // End of input
     Eof,

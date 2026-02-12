@@ -53,20 +53,21 @@ mod plugin {
     pub extern "C" fn _start() {
         // 1. Load configuration
         let config_bytes = host::config();
-        let config: Config = serde_json::from_slice(&config_bytes)
-            .unwrap_or_else(|e| {
-                log_error(&format!("Invalid config JSON: {}", e));
-                std::process::abort();
-            });
+        let config: Config = serde_json::from_slice(&config_bytes).unwrap_or_else(|e| {
+            log_error(&format!("Invalid config JSON: {}", e));
+            std::process::abort();
+        });
 
         // 2. Compile expression
-        let program = Program::compile(&config.expression)
-            .unwrap_or_else(|e| {
-                log_error(&format!("Invalid expression: {}", e));
-                std::process::abort();
-            });
+        let program = Program::compile(&config.expression).unwrap_or_else(|e| {
+            log_error(&format!("Invalid expression: {}", e));
+            std::process::abort();
+        });
 
-        log_info(&format!("Expression compiled successfully: {}", config.expression));
+        log_info(&format!(
+            "Expression compiled successfully: {}",
+            config.expression
+        ));
 
         // 3. Run test cases
         for tc in &config.tests {

@@ -110,7 +110,10 @@ mod tests {
         assert_eq!(config.tests[0].request.method, "POST");
         assert_eq!(config.tests[0].request.path, "/api");
         assert_eq!(config.tests[0].request.host, "example.com");
-        assert_eq!(config.tests[0].request.headers.get("X-Test"), Some(&"value".to_string()));
+        assert_eq!(
+            config.tests[0].request.headers.get("X-Test"),
+            Some(&"value".to_string())
+        );
         assert_eq!(config.tests[0].expect, true);
     }
 

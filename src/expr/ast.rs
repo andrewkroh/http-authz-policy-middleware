@@ -15,10 +15,7 @@ pub enum Expr {
     Ident(Ident),
 
     /// Function call
-    FuncCall {
-        name: String,
-        args: Vec<Expr>,
-    },
+    FuncCall { name: String, args: Vec<Expr> },
 
     /// Binary operation (comparison operators)
     BinaryOp {

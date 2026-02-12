@@ -78,7 +78,10 @@ impl Parser {
         if self.current_token != Token::Eof {
             return Err(ParseError {
                 pos: self.pos,
-                message: format!("Unexpected token after expression: {:?}", self.current_token),
+                message: format!(
+                    "Unexpected token after expression: {:?}",
+                    self.current_token
+                ),
             });
         }
 
@@ -315,7 +318,10 @@ mod tests {
                     Expr::FuncCall { name, args } => {
                         assert_eq!(name, "headerList");
                         assert_eq!(args.len(), 1);
-                        assert_eq!(args[0], Expr::StringLiteral("X-Auth-User-Teams".to_string()));
+                        assert_eq!(
+                            args[0],
+                            Expr::StringLiteral("X-Auth-User-Teams".to_string())
+                        );
                     }
                     _ => panic!("Expected FuncCall on left"),
                 }
@@ -351,7 +357,8 @@ mod tests {
 
     #[test]
     fn test_parse_complex_nested() {
-        let expr = parse(r#"(method == "GET" OR method == "HEAD") AND path startsWith "/public""#).unwrap();
+        let expr = parse(r#"(method == "GET" OR method == "HEAD") AND path startsWith "/public""#)
+            .unwrap();
 
         match expr {
             Expr::And(left, right) => {

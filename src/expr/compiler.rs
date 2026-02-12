@@ -65,10 +65,7 @@ impl Program {
         // Ensure top-level expression is boolean
         if expr_type != Type::Bool {
             return Err(CompileError {
-                message: format!(
-                    "Top-level expression must be boolean, got {}",
-                    expr_type
-                ),
+                message: format!("Top-level expression must be boolean, got {}", expr_type),
             });
         }
 
@@ -92,11 +89,7 @@ fn type_check(expr: &Expr) -> Result<Type, CompileError> {
             let right_type = type_check(right)?;
 
             match op {
-                BinOp::Eq
-                | BinOp::Neq
-                | BinOp::StartsWith
-                | BinOp::EndsWith
-                | BinOp::Matches => {
+                BinOp::Eq | BinOp::Neq | BinOp::StartsWith | BinOp::EndsWith | BinOp::Matches => {
                     // All comparison operators require (string, string) -> bool
                     if left_type != Type::Str {
                         return Err(CompileError {
@@ -168,10 +161,7 @@ fn type_check(expr: &Expr) -> Result<Type, CompileError> {
             let inner_type = type_check(inner)?;
             if inner_type != Type::Bool {
                 return Err(CompileError {
-                    message: format!(
-                        "NOT operator requires bool operand, got {}",
-                        inner_type
-                    ),
+                    message: format!("NOT operator requires bool operand, got {}", inner_type),
                 });
             }
             Ok(Type::Bool)
@@ -376,10 +366,9 @@ mod tests {
 
     #[test]
     fn test_compile_complex_expression() {
-        let program = Program::compile(
-            r#"contains(headerList("X-Auth-User-Teams"), "platform-eng")"#,
-        )
-        .unwrap();
+        let program =
+            Program::compile(r#"contains(headerList("X-Auth-User-Teams"), "platform-eng")"#)
+                .unwrap();
         assert!(matches!(program.root, Expr::BinaryOp { .. }));
     }
 
@@ -425,10 +414,8 @@ mod tests {
 
     #[test]
     fn test_valid_anyof() {
-        let program = Program::compile(
-            r#"anyOf(headerList("X-Teams"), "platform-eng", "devops")"#,
-        )
-        .unwrap();
+        let program =
+            Program::compile(r#"anyOf(headerList("X-Teams"), "platform-eng", "devops")"#).unwrap();
         assert!(matches!(program.root, Expr::FuncCall { .. }));
     }
 

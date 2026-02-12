@@ -207,9 +207,7 @@ fn eval_function(name: &str, args: &[Expr], ctx: &RequestContext) -> Result<Valu
             let item_val = eval_expr(&args[1], ctx)?;
 
             match (list_val, item_val) {
-                (Value::StrList(list), Value::Str(item)) => {
-                    Ok(Value::Bool(list.contains(&item)))
-                }
+                (Value::StrList(list), Value::Str(item)) => Ok(Value::Bool(list.contains(&item))),
                 _ => Err(EvalError {
                     message: "contains() expects ([]string, string)".to_string(),
                 }),

@@ -65,11 +65,13 @@ impl RequestContext {
             let lowercase_name = name.to_lowercase();
 
             // Store first value
-            headers.entry(lowercase_name.clone())
+            headers
+                .entry(lowercase_name.clone())
                 .or_insert_with(|| value.clone());
 
             // Store all values
-            all_headers.entry(lowercase_name)
+            all_headers
+                .entry(lowercase_name)
                 .or_insert_with(Vec::new)
                 .push(value.clone());
         }
@@ -207,7 +209,10 @@ mod tests {
     #[test]
     fn test_header_list_with_spaces() {
         let mut headers = HashMap::new();
-        headers.insert("X-Teams".to_string(), "platform-eng , devops , sre".to_string());
+        headers.insert(
+            "X-Teams".to_string(),
+            "platform-eng , devops , sre".to_string(),
+        );
 
         let test_req = TestRequest {
             headers,
