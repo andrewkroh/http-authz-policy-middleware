@@ -88,30 +88,30 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 - [x] Verify: All tests pass (28 tests passing)
 - [x] Commit Phase 5 changes
 
-## Phase 6: Expression Language - Type Checker and Compiler
-- [ ] Create src/expr/compiler.rs
-- [ ] Define Type enum (Str, StrList, Bool)
-- [ ] Define CompileError struct with position and type mismatch details
-- [ ] Define Program struct (root: Expr)
-- [ ] Implement compile(input) entry point
-- [ ] Implement type_check() recursive function
-- [ ] Add type checking for identifiers (method/path/host → Str)
-- [ ] Add type checking for binary operators (all require Str, Str → Bool)
-- [ ] Add type checking for boolean operators (AND/OR require Bool → Bool)
-- [ ] Add type checking for NOT (requires Bool → Bool)
-- [ ] Add type checking for header(string) → string
-- [ ] Add type checking for headerValues(string) → []string
-- [ ] Add type checking for headerList(string) → []string
-- [ ] Add type checking for contains([]string, string) → bool
-- [ ] Add type checking for anyOf([]string, ...string) → bool (variadic)
-- [ ] Add type checking for allOf([]string, ...string) → bool (variadic)
-- [ ] Verify top-level expression is bool
-- [ ] Add unit test: type error `method AND path`
-- [ ] Add unit test: type error `contains("foo", "bar")`
-- [ ] Add unit test: valid expression compilation
-- [ ] Add unit test: arity checks for variadic functions
-- [ ] Verify: All tests pass
-- [ ] Commit Phase 6 changes
+## Phase 6: Expression Language - Type Checker and Compiler ✅
+- [x] Create src/expr/compiler.rs
+- [x] Define Type enum (Str, StrList, Bool)
+- [x] Define CompileError struct with position and type mismatch details
+- [x] Define Program struct (root: Expr)
+- [x] Implement compile(input) entry point
+- [x] Implement type_check() recursive function
+- [x] Add type checking for identifiers (method/path/host → Str)
+- [x] Add type checking for binary operators (all require Str, Str → Bool)
+- [x] Add type checking for boolean operators (AND/OR require Bool → Bool)
+- [x] Add type checking for NOT (requires Bool → Bool)
+- [x] Add type checking for header(string) → string
+- [x] Add type checking for headerValues(string) → []string
+- [x] Add type checking for headerList(string) → []string
+- [x] Add type checking for contains([]string, string) → bool
+- [x] Add type checking for anyOf([]string, ...string) → bool (variadic)
+- [x] Add type checking for allOf([]string, ...string) → bool (variadic)
+- [x] Verify top-level expression is bool
+- [x] Add unit test: type error `method AND path`
+- [x] Add unit test: type error `contains("foo", "bar")`
+- [x] Add unit test: valid expression compilation
+- [x] Add unit test: arity checks for variadic functions
+- [x] Verify: All tests pass (38 tests passing)
+- [x] Commit Phase 6 changes
 
 ## Phase 7: Expression Language - Evaluator
 - [ ] Create src/expr/eval.rs
@@ -270,9 +270,9 @@ This document tracks the implementation progress of the Traefik WASM Authorizati
 
 ## Progress Summary
 - **Total Phases:** 13
-- **Completed Phases:** 5
-- **Current Phase:** Phase 6 - Expression Language Type Checker and Compiler
-- **Overall Progress:** 5/13 phases complete (38.5%)
+- **Completed Phases:** 6
+- **Current Phase:** Phase 7 - Expression Language Evaluator
+- **Overall Progress:** 6/13 phases complete (46.2%)
 
 ---
 
