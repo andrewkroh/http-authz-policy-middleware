@@ -40,7 +40,7 @@ jobs:
           key: ${{ runner.os }}-cargo-playground-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install wasm-bindgen-cli
-        run: command -v wasm-bindgen || cargo install wasm-bindgen-cli@0.2.108 --locked
+        run: cargo install -f wasm-bindgen-cli@0.2.108 --locked
 
       - uses: ./.github/actions/install-wasm-opt
 
