@@ -61,11 +61,10 @@ This is a Traefik v3 middleware plugin compiled to WebAssembly (WASM) that perfo
 │   └── README.md               # Integration testing documentation
 ├── examples/                   # Example Traefik configurations
 ├── scripts/
-│   ├── check-license.sh        # License header validation
-│   └── prepare-release.sh      # Release preparation automation
+│   └── check-license-headers.sh # License header validation
 ├── docs/
 │   ├── DESIGN.md               # Comprehensive design documentation
-│   └── TASKS.md                # Implementation progress tracking
+│   └── RELEASE_GUIDE.md        # Quick release reference
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml              # CI/CD pipeline
@@ -726,101 +725,34 @@ git cliff --unreleased --strip all
 
 ## Release Process
 
-This project uses automated GitHub Actions workflows to create releases. Releases are triggered by pushing semantic version tags.
+This project uses a fully automated GitHub Actions workflow to create releases. The entire process is triggered from the GitHub Actions UI — no local steps required.
 
 ### Creating a Release
 
-#### 1. Ensure Version Consistency
+1. Go to **Actions** > **Release** workflow in GitHub
+2. Click **Run workflow**
+3. Enter the version (e.g., `v0.2.0`) — must follow `vMAJOR.MINOR.PATCH` format
+4. Click **Run workflow**
 
-Before creating a release, verify that the version in `Cargo.toml` matches the intended release tag:
+The workflow automatically:
 
-```toml
-[package]
-name = "traefik-authz-wasm"
-version = "0.1.0"  # Should match the tag (v0.1.0)
-```
+1. **Validates** the version format and checks the tag doesn't already exist
+2. **Runs quality checks** — clippy, formatting, license headers (`make check`)
+3. **Runs tests** — unit tests (`make test`) and integration tests (`./run-tests.sh`)
+4. **Builds** the optimized WASM plugin (`make release`)
+5. **Updates `Cargo.toml`** version if it differs, commits to main
+6. **Creates and pushes** the git tag
+7. **Generates release notes** from conventional commits using git-cliff
+8. **Packages** the plugin ZIP and **creates the GitHub Release**
 
-While not strictly required, keeping the Cargo.toml version synchronized with git tags is a best practice.
-
-#### 2. Verify Pre-Release Checklist
-
-Before tagging a release, ensure:
-
-- [ ] All tests pass: `cargo test`
-- [ ] Integration tests pass: `cd integration-test && ./run-tests.sh`
-- [ ] Code is formatted: `cargo fmt --check`
-- [ ] No clippy warnings: `cargo clippy --target wasm32-wasip1`
-- [ ] Documentation is up to date
-- [ ] All recent commits follow conventional commit format
-- [ ] Release notes look good (preview with `git cliff --unreleased --strip all`)
-
-#### 3. Create and Push a Version Tag
-
-**Option A: Using the Helper Script (Recommended)**
-
-A helper script automates pre-release checks and guides you through the process:
-
-```bash
-# Run the prepare-release script
-./scripts/prepare-release.sh v0.2.0
-```
-
-This script will:
-- Validate the version format
-- Update Cargo.toml version (if needed)
-- Run all pre-release checks (tests, formatting, clippy)
-- Build and verify the release
-- Preview the changelog
-- Provide instructions for tagging
-
-**Option B: Manual Process**
-
-Tags must follow semantic versioning with a `v` prefix:
-
-```bash
-# For a new minor version
-git tag v0.2.0
-
-# For a patch version
-git tag v0.1.1
-
-# For a major version
-git tag v1.0.0
-
-# Push the tag to trigger the release workflow
-git push origin v0.2.0
-```
-
-**Tag Format Requirements:**
-- Must start with `v`
-- Must follow semantic versioning: `vMAJOR.MINOR.PATCH`
-- Examples: `v0.1.0`, `v1.2.3`, `v2.0.0`
-- Invalid: `0.1.0`, `v1.2`, `release-1.0`
-
-#### 4. Automated Release Process
-
-Once the tag is pushed, GitHub Actions automatically:
-
-1. **Validates the tag format** - Ensures it follows `vX.Y.Z` pattern
-2. **Builds the WASM plugin** - Compiles with release optimizations
-3. **Generates release notes** - Creates notes from conventional commits using git-cliff
-4. **Packages the plugin** - Creates a ZIP archive with:
-   - `plugin.wasm` - The compiled WASM binary
-   - `.traefik.yml` - The plugin manifest
-5. **Creates GitHub Release** - Publishes release with:
-   - Release notes generated from commits
-   - Plugin package ZIP
-   - Individual plugin files (plugin.wasm, .traefik.yml)
-
-#### 5. Post-Release Steps
+#### Post-Release Steps
 
 After the release workflow completes:
 
 1. **Verify the release** on the GitHub Releases page
 2. **Download and test** the plugin package
-3. **Update version** in `Cargo.toml` for next development cycle (optional)
-4. **Announce the release** (if applicable)
-5. **Submit to Traefik Plugin Catalog** (if desired)
+3. **Announce the release** (if applicable)
+4. **Submit to Traefik Plugin Catalog** (if desired)
 
 ### Release Artifacts
 
@@ -859,17 +791,16 @@ This project follows [Semantic Versioning](https://semver.org/):
 
 ### Release Troubleshooting
 
-**Tag push rejected:**
+**Tag already exists:**
+The workflow checks for this upfront. To re-release the same version:
 ```bash
-# Tag already exists locally - delete and recreate
-git tag -d v0.1.0
-git tag v0.1.0
-git push origin v0.1.0
+git tag -d v0.1.0 && git push origin :refs/tags/v0.1.0
 ```
+Then delete the GitHub release via the web UI and re-run the workflow.
 
 **Release workflow fails:**
 - Check GitHub Actions logs for specific errors
-- Verify tag format matches `vX.Y.Z` pattern
+- Verify version format matches `vX.Y.Z` pattern
 - Ensure all CI checks pass on main branch
 - Check that `wasm32-wasip1` target builds successfully
 

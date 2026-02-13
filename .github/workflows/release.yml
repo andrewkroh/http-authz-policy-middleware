@@ -1,9 +1,12 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v0.2.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -12,29 +15,39 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate version format
+        run: |
+          VERSION="${{ inputs.version }}"
+          if ! [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version must follow semantic versioning (e.g., v1.2.3)"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION_NUMBER=${VERSION#v}" >> $GITHUB_ENV
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for changelog generation
 
-      - name: Validate tag format
+      - name: Check tag does not already exist
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          echo "Creating release for tag: $TAG"
-          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Tag must follow semantic versioning (e.g., v1.2.3)"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Error: Tag $VERSION already exists"
             exit 1
           fi
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          components: rustfmt, clippy
           targets: wasm32-wasip1
 
       - name: Install wasm-opt
-        run: |
-          echo "Installing wasm-opt for binary optimization..."
-          cargo install wasm-opt
+        run: cargo install wasm-opt
+
+      - name: Install git-cliff
+        run: cargo install git-cliff
 
       - name: Cache cargo dependencies
         uses: actions/cache@v4
@@ -47,53 +60,87 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Build release WASM
-        run: |
-          echo "Building optimized WASM plugin with make release..."
-          make release
-          SIZE=$(stat -c%s plugin.wasm)
-          SIZE_KB=$((SIZE / 1024))
-          echo "Optimized binary size: ${SIZE_KB} KB"
+      - name: Run quality checks
+        run: make check
 
-          # Verify the binary was optimized
-          if [ $SIZE_KB -lt 700 ]; then
-            echo "✓ Binary is optimized (~650 KB expected)"
+      - name: Run tests
+        run: make test
+
+      - name: Build release WASM
+        run: make release
+
+      - name: Run integration tests
+        run: |
+          cd integration-test
+          chmod +x run-tests.sh
+          ./run-tests.sh
+
+      - name: Show Traefik logs on failure
+        if: failure()
+        run: |
+          cd integration-test
+          docker compose logs traefik || echo "Could not retrieve logs"
+          docker compose down || true
+
+      - name: Update Cargo.toml version
+        run: |
+          CURRENT=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          if [ "$CURRENT" != "$VERSION_NUMBER" ]; then
+            echo "Updating Cargo.toml version from $CURRENT to $VERSION_NUMBER"
+            sed -i "s/^version = \".*\"/version = \"$VERSION_NUMBER\"/" Cargo.toml
           else
-            echo "⚠ Warning: Binary seems larger than expected (>700 KB)"
-            echo "Expected: ~650 KB with wasm-opt optimization"
+            echo "Cargo.toml already at version $VERSION_NUMBER"
           fi
 
-      - name: Install git-cliff
-        run: cargo install git-cliff
+      - name: Commit version bump
+        run: |
+          if git diff --quiet Cargo.toml; then
+            echo "No version change to commit"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add Cargo.toml
+            git commit -m "chore: bump version to $VERSION_NUMBER"
+            git push origin main
+          fi
+
+      - name: Create and push tag
+        run: |
+          git tag "$VERSION"
+          git push origin "$VERSION"
 
       - name: Generate release notes
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          echo "Generating release notes for $TAG..."
-          git cliff --tag "$TAG" --unreleased --strip all > release-notes.md
-
+          echo "Generating release notes for $VERSION..."
+          git cliff --tag "$VERSION" --unreleased --strip all > release-notes.md
           echo "=== Release Notes Preview ==="
           cat release-notes.md
 
       - name: Package plugin for Traefik catalog
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          ARCHIVE_NAME="http-authz-policy-middleware-${TAG}.zip"
-
+          ARCHIVE_NAME="http-authz-policy-middleware-${VERSION}.zip"
           echo "Creating plugin package: $ARCHIVE_NAME"
           zip -j "$ARCHIVE_NAME" plugin.wasm .traefik.yml
-
           echo "Package contents:"
           unzip -l "$ARCHIVE_NAME"
-
           ls -lh "$ARCHIVE_NAME"
-
-          # Save archive name for later steps
           echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+
+      - name: Report binary size
+        run: |
+          SIZE=$(stat -c%s plugin.wasm)
+          SIZE_KB=$((SIZE / 1024))
+          echo "Optimized binary size: ${SIZE_KB} KB"
+          if [ $SIZE_KB -gt 750 ]; then
+            echo "Warning: Binary size exceeds 750 KB (expected ~650 KB)"
+          else
+            echo "Binary size within expected range"
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.VERSION }}
           files: |
             ${{ env.ARCHIVE_NAME }}
             plugin.wasm
@@ -105,18 +152,12 @@ jobs:
 
       - name: Release summary
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
           echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** $TAG" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** $VERSION" >> $GITHUB_STEP_SUMMARY
           echo "**Archive:** ${{ env.ARCHIVE_NAME }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
           echo "- \`plugin.wasm\` - Compiled WASM plugin" >> $GITHUB_STEP_SUMMARY
           echo "- \`.traefik.yml\` - Plugin manifest" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ env.ARCHIVE_NAME }}\` - Complete plugin package (for Traefik catalog)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Verify release artifacts on GitHub Releases page" >> $GITHUB_STEP_SUMMARY
-          echo "2. Test the plugin package with Traefik" >> $GITHUB_STEP_SUMMARY
-          echo "3. Submit to Traefik Plugin Catalog (if desired)" >> $GITHUB_STEP_SUMMARY

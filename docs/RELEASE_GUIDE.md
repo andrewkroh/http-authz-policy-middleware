@@ -2,61 +2,30 @@
 
 Quick reference for creating releases of the HTTP Authorization Policy Middleware.
 
-## Prerequisites
+## Creating a Release
 
-- [x] All tests passing
-- [x] Code formatted (`cargo fmt`)
-- [x] No clippy warnings
-- [x] Integration tests passing
-- [x] Documentation up to date
-- [x] All commits follow conventional commit format
+Releases are fully automated via GitHub Actions. To create a release:
 
-## Quick Release Process
+1. Go to **Actions** > **Release** workflow
+2. Click **Run workflow**
+3. Enter the version (e.g., `v0.2.0`)
+4. Click **Run workflow**
 
-### 1. Prepare Release
+The workflow handles everything automatically:
+- Runs quality checks (clippy, formatting, license headers)
+- Runs unit and integration tests
+- Updates `Cargo.toml` version (if needed) and commits to main
+- Creates and pushes the git tag
+- Builds the optimized WASM plugin
+- Generates release notes from conventional commits
+- Creates the GitHub Release with artifacts
 
-Use the automated helper script:
-
-```bash
-./scripts/prepare-release.sh v0.2.0
-```
-
-Or manually:
-- Update version in `Cargo.toml`
-- Run `cargo test`
-- Run `cargo fmt --check`
-- Run `cargo clippy --target wasm32-wasip1`
-- Run `make release && cd integration-test && ./run-tests.sh`
-
-### 2. Commit Version Bump (if needed)
-
-```bash
-git add Cargo.toml
-git commit -m "chore: bump version to 0.2.0"
-git push origin main
-```
-
-### 3. Create and Push Tag
-
-```bash
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-### 4. Automated Release
-
-GitHub Actions will automatically:
-- Build WASM plugin
-- Generate release notes from commits
-- Create GitHub Release
-- Package plugin for Traefik catalog
-
-## Tag Format
+## Version Format
 
 - **Valid:** `v0.1.0`, `v1.2.3`, `v2.0.0`
 - **Invalid:** `0.1.0`, `v1.2`, `release-1.0`
 
-Pattern: `v[MAJOR].[MINOR].[PATCH]`
+Pattern: `vMAJOR.MINOR.PATCH`
 
 ## Release Artifacts
 
@@ -78,27 +47,21 @@ Follow [Semantic Versioning](https://semver.org/):
 
 ## Troubleshooting
 
-### Tag already exists
-
-```bash
-git tag -d v0.1.0
-git tag v0.1.0
-git push origin v0.1.0
-```
-
 ### Release workflow fails
 
 Check:
 - GitHub Actions logs for errors
-- Tag format matches `vX.Y.Z`
+- Version format matches `vX.Y.Z`
 - All CI checks pass on main
 - WASM target builds successfully
 
-### Need to update release
+### Tag already exists
+
+The workflow will fail if the tag already exists. To re-release:
 
 1. Delete the tag: `git tag -d v0.1.0 && git push origin :refs/tags/v0.1.0`
 2. Delete the GitHub release (via web UI)
-3. Fix issues and create tag again
+3. Re-run the workflow
 
 ## Resources
 
