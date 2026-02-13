@@ -1,0 +1,68 @@
+# Dynamic configuration with authorization middleware
+
+http:
+  routers:
+    test-allowed:
+      rule: "PathPrefix(`/allowed`)"
+      service: backend
+      middlewares:
+        - team-authz
+
+    test-denied:
+      rule: "PathPrefix(`/denied`)"
+      service: backend
+      middlewares:
+        - team-authz
+
+    test-method:
+      rule: "PathPrefix(`/method-test`)"
+      service: backend
+      middlewares:
+        - method-check
+
+  middlewares:
+    team-authz:
+      plugin:
+        http-authz-policy-middleware:
+          expression: 'contains(headerList("X-Auth-User-Teams"), "platform-eng")'
+          denyStatusCode: 403
+          denyBody: "Access denied: requires platform-eng team membership"
+          tests:
+            - name: "platform-eng team allowed"
+              request:
+                headers:
+                  X-Auth-User-Teams: "platform-eng,devops"
+              expect: true
+            - name: "marketing team denied"
+              request:
+                headers:
+                  X-Auth-User-Teams: "marketing"
+              expect: false
+            - name: "no header denied"
+              request:
+                headers: {}
+              expect: false
+
+    method-check:
+      plugin:
+        http-authz-policy-middleware:
+          expression: 'method == "GET" OR method == "HEAD"'
+          denyStatusCode: 405
+          denyBody: "Method not allowed: only GET and HEAD are permitted"
+          tests:
+            - name: "GET allowed"
+              request:
+                method: "GET"
+                path: "/method-test"
+              expect: true
+            - name: "POST denied"
+              request:
+                method: "POST"
+                path: "/method-test"
+              expect: false
+
+  services:
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://backend:8080"

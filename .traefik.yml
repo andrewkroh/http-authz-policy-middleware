@@ -1,0 +1,13 @@
+displayName: HTTP Authorization Policy Middleware
+type: middleware
+runtime: wasm
+summary: >-
+  Attribute-based authorization middleware that evaluates custom expressions
+  against HTTP request properties (method, path, host, headers). Features a
+  type-safe expression language with built-in testing framework. Ideal for
+  enforcing team-based access policies from upstream ForwardAuth headers.
+
+testData:
+  expression: 'method == "GET" AND path startsWith "/api"'
+  denyStatusCode: 403
+  denyBody: "Access denied"

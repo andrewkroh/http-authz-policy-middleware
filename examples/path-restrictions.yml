@@ -1,0 +1,54 @@
+# Path-based access restrictions example
+#
+# This configuration demonstrates how to restrict access based on
+# the request path and method.
+#
+# Use case: Allow only GET/HEAD requests to /api endpoints
+
+http:
+  routers:
+    api-router:
+      rule: "Host(`api.example.com`)"
+      service: api-service
+      middlewares:
+        - readonly-api
+
+  middlewares:
+    readonly-api:
+      plugin:
+        http-authz-policy-middleware:
+          # Allow only safe methods (GET, HEAD) on /api paths
+          expression: '(method == "GET" OR method == "HEAD") AND path startsWith "/api"'
+          denyStatusCode: 405
+          denyBody: "Method not allowed: only GET and HEAD are permitted on /api"
+
+          tests:
+            - name: "GET /api allowed"
+              request:
+                method: "GET"
+                path: "/api/users"
+              expect: true
+
+            - name: "HEAD /api allowed"
+              request:
+                method: "HEAD"
+                path: "/api/health"
+              expect: true
+
+            - name: "POST /api denied"
+              request:
+                method: "POST"
+                path: "/api/users"
+              expect: false
+
+            - name: "GET /public denied (wrong path)"
+              request:
+                method: "GET"
+                path: "/public/index.html"
+              expect: false
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://api-backend:8080"

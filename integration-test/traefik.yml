@@ -1,0 +1,28 @@
+# Traefik static configuration for integration testing
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+log:
+  level: DEBUG
+
+ping: {}
+
+api:
+  insecure: true
+  dashboard: true
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
+
+experimental:
+  localPlugins:
+    http-authz-policy-middleware:
+      moduleName: github.com/andrewkroh/http-authz-policy-middleware

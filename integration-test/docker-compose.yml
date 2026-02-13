@@ -1,0 +1,50 @@
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik-authz-test
+    ports:
+      # Bind to 127.0.0.1 only for security (not exposed to external network)
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8081:8080"  # Traefik dashboard
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      - ./plugins-local:/plugins-local:ro
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+
+  backend:
+    image: hashicorp/http-echo:latest
+    container_name: backend-test
+    command:
+      - "-text=Backend response: OK"
+      - "-listen=:8080"
+    networks:
+      - test-network
+
+  # Test runner container - runs tests inside Docker network
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: test-runner
+    environment:
+      - TRAEFIK_URL=http://traefik:80
+    networks:
+      - test-network
+    depends_on:
+      traefik:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    profiles:
+      - test  # Only run when explicitly requested
+
+networks:
+  test-network:
+    driver: bridge

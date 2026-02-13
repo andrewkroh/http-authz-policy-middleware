@@ -1,0 +1,84 @@
+# Combined rules with complex boolean logic example
+#
+# This configuration demonstrates complex access control combining
+# multiple conditions with AND/OR/NOT operators.
+#
+# Use case: Fine-grained access control with multiple criteria
+
+http:
+  routers:
+    admin-api-router:
+      rule: "Host(`admin.example.com`)"
+      service: admin-service
+      middlewares:
+        - admin-authz
+
+  middlewares:
+    admin-authz:
+      plugin:
+        http-authz-policy-middleware:
+          # Complex authorization logic:
+          # 1. Admin API paths require admin role
+          # 2. OR user must be in platform-eng team AND using safe methods
+          # 3. Never allow DELETE method
+          expression: |
+            (
+              (path startsWith "/admin" AND contains(headerList("X-Auth-User-Roles"), "admin"))
+              OR
+              (
+                contains(headerList("X-Auth-User-Teams"), "platform-eng")
+                AND
+                (method == "GET" OR method == "HEAD")
+              )
+            )
+            AND
+            NOT method == "DELETE"
+
+          denyStatusCode: 403
+          denyBody: "Access denied: insufficient permissions"
+
+          tests:
+            - name: "admin role can access /admin"
+              request:
+                method: "POST"
+                path: "/admin/users"
+                headers:
+                  X-Auth-User-Roles: "admin,user"
+              expect: true
+
+            - name: "platform-eng GET allowed"
+              request:
+                method: "GET"
+                path: "/api/metrics"
+                headers:
+                  X-Auth-User-Teams: "platform-eng"
+              expect: true
+
+            - name: "platform-eng POST denied"
+              request:
+                method: "POST"
+                path: "/api/metrics"
+                headers:
+                  X-Auth-User-Teams: "platform-eng"
+              expect: false
+
+            - name: "DELETE always denied"
+              request:
+                method: "DELETE"
+                path: "/admin/users"
+                headers:
+                  X-Auth-User-Roles: "admin"
+              expect: false
+
+            - name: "no credentials denied"
+              request:
+                method: "GET"
+                path: "/api/metrics"
+                headers: {}
+              expect: false
+
+  services:
+    admin-service:
+      loadBalancer:
+        servers:
+          - url: "http://admin-backend:8080"
