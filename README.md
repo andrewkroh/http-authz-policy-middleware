@@ -17,6 +17,25 @@ This plugin enables fine-grained access control based on HTTP request attributes
 - Case-insensitive header lookups
 - Minimal overhead (compiled WASM)
 
+## Playground
+
+Try the expression language in your browser at the [online playground](https://andrewkroh.github.io/http-authz-policy-middleware/). You can write expressions, configure mock requests, and see evaluation results instantly — no Traefik installation required.
+
+## Installation
+
+Add the plugin to your Traefik static configuration:
+
+```yaml
+# traefik.yml
+experimental:
+  plugins:
+    http-authz-policy-middleware:
+      moduleName: github.com/andrewkroh/http-authz-policy-middleware
+      version: v0.0.3
+```
+
+Traefik will download the plugin from the [Plugin Catalog](https://plugins.traefik.io/) on startup.
+
 ## Quick Start
 
 ```yaml

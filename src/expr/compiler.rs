@@ -3,7 +3,7 @@
 
 // Type checker and compiler for the expression language
 
-use super::ast::{BinOp, Expr, Ident};
+use super::ast::{BinOp, CompiledRegex, Expr, Ident};
 use super::parser;
 use std::fmt;
 
@@ -60,10 +60,10 @@ impl Program {
     /// Compile an expression from a string
     pub fn compile(input: &str) -> Result<Self, CompileError> {
         // Parse the expression
-        let root = parser::parse(input)?;
+        let parsed = parser::parse(input)?;
 
-        // Type check the expression
-        let expr_type = type_check(&root)?;
+        // Type check and transform the expression (e.g., pre-compile regex patterns)
+        let (expr_type, root) = type_check(&parsed)?;
 
         // Ensure top-level expression is boolean
         if expr_type != Type::Bool {
@@ -76,24 +76,27 @@ impl Program {
     }
 }
 
-/// Type check an expression recursively
-fn type_check(expr: &Expr) -> Result<Type, CompileError> {
+/// Type check an expression recursively, returning the type and a
+/// potentially-transformed expression (e.g., `matches` is replaced with
+/// `RegexMatch` containing a pre-compiled regex).
+fn type_check(expr: &Expr) -> Result<(Type, Expr), CompileError> {
     match expr {
-        Expr::BoolLiteral(_) => Ok(Type::Bool),
+        Expr::BoolLiteral(b) => Ok((Type::Bool, Expr::BoolLiteral(*b))),
 
-        Expr::StringLiteral(_) => Ok(Type::Str),
+        Expr::StringLiteral(s) => Ok((Type::Str, Expr::StringLiteral(s.clone()))),
 
         Expr::Ident(ident) => match ident {
-            Ident::Method | Ident::Path | Ident::Host => Ok(Type::Str),
+            Ident::Method | Ident::Path | Ident::Host => {
+                Ok((Type::Str, Expr::Ident(ident.clone())))
+            }
         },
 
         Expr::BinaryOp { op, left, right } => {
-            let left_type = type_check(left)?;
-            let right_type = type_check(right)?;
+            let (left_type, left_compiled) = type_check(left)?;
+            let (right_type, right_compiled) = type_check(right)?;
 
             match op {
-                BinOp::Eq | BinOp::Neq | BinOp::StartsWith | BinOp::EndsWith | BinOp::Matches => {
-                    // All comparison operators require (string, string) -> bool
+                BinOp::Eq | BinOp::Neq | BinOp::StartsWith | BinOp::EndsWith => {
                     if left_type != Type::Str {
                         return Err(CompileError {
                             message: format!(
@@ -110,7 +113,50 @@ fn type_check(expr: &Expr) -> Result<Type, CompileError> {
                             ),
                         });
                     }
-                    Ok(Type::Bool)
+                    Ok((
+                        Type::Bool,
+                        Expr::BinaryOp {
+                            op: op.clone(),
+                            left: Box::new(left_compiled),
+                            right: Box::new(right_compiled),
+                        },
+                    ))
+                }
+
+                BinOp::Matches => {
+                    // The matches operator requires string on the left
+                    if left_type != Type::Str {
+                        return Err(CompileError {
+                            message: format!(
+                                "Operator matches requires string operands, got {} on left",
+                                left_type
+                            ),
+                        });
+                    }
+
+                    // Security: The pattern (right operand) MUST be a string literal
+                    // to prevent regex injection from dynamic sources like headers.
+                    let pattern = match right.as_ref() {
+                        Expr::StringLiteral(s) => s,
+                        _ => {
+                            return Err(CompileError {
+                                message: "Operator matches requires a string literal as the pattern; dynamic patterns are not allowed".to_string(),
+                            });
+                        }
+                    };
+
+                    // Pre-compile the regex at compile time
+                    let compiled = CompiledRegex::new(pattern).map_err(|e| CompileError {
+                        message: format!("Invalid regex pattern '{}': {}", pattern, e),
+                    })?;
+
+                    Ok((
+                        Type::Bool,
+                        Expr::RegexMatch {
+                            expr: Box::new(left_compiled),
+                            regex: compiled,
+                        },
+                    ))
                 }
 
                 BinOp::Contains => {
@@ -131,14 +177,27 @@ fn type_check(expr: &Expr) -> Result<Type, CompileError> {
                             ),
                         });
                     }
-                    Ok(Type::Bool)
+                    Ok((
+                        Type::Bool,
+                        Expr::BinaryOp {
+                            op: BinOp::Contains,
+                            left: Box::new(left_compiled),
+                            right: Box::new(right_compiled),
+                        },
+                    ))
                 }
             }
         }
 
-        Expr::And(left, right) | Expr::Or(left, right) => {
-            let left_type = type_check(left)?;
-            let right_type = type_check(right)?;
+        Expr::RegexMatch { .. } => {
+            // RegexMatch nodes are only produced by the compiler, never by the parser.
+            // If we encounter one here, just pass it through.
+            Ok((Type::Bool, expr.clone()))
+        }
+
+        Expr::And(left, right) => {
+            let (left_type, left_compiled) = type_check(left)?;
+            let (right_type, right_compiled) = type_check(right)?;
 
             if left_type != Type::Bool {
                 return Err(CompileError {
@@ -157,25 +216,67 @@ fn type_check(expr: &Expr) -> Result<Type, CompileError> {
                 });
             }
 
-            Ok(Type::Bool)
+            Ok((
+                Type::Bool,
+                Expr::And(Box::new(left_compiled), Box::new(right_compiled)),
+            ))
+        }
+
+        Expr::Or(left, right) => {
+            let (left_type, left_compiled) = type_check(left)?;
+            let (right_type, right_compiled) = type_check(right)?;
+
+            if left_type != Type::Bool {
+                return Err(CompileError {
+                    message: format!(
+                        "Boolean operator requires bool operands, got {} on left",
+                        left_type
+                    ),
+                });
+            }
+            if right_type != Type::Bool {
+                return Err(CompileError {
+                    message: format!(
+                        "Boolean operator requires bool operands, got {} on right",
+                        right_type
+                    ),
+                });
+            }
+
+            Ok((
+                Type::Bool,
+                Expr::Or(Box::new(left_compiled), Box::new(right_compiled)),
+            ))
         }
 
         Expr::Not(inner) => {
-            let inner_type = type_check(inner)?;
+            let (inner_type, inner_compiled) = type_check(inner)?;
             if inner_type != Type::Bool {
                 return Err(CompileError {
                     message: format!("NOT operator requires bool operand, got {}", inner_type),
                 });
             }
-            Ok(Type::Bool)
+            Ok((Type::Bool, Expr::Not(Box::new(inner_compiled))))
         }
 
         Expr::FuncCall { name, args } => type_check_function(name, args),
     }
 }
 
-/// Type check a function call
-fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> {
+/// Type check a function call, returning the type and the reconstructed expression
+fn type_check_function(name: &str, args: &[Expr]) -> Result<(Type, Expr), CompileError> {
+    // Helper to build the reconstructed FuncCall expression
+    let build_func =
+        |name: &str, compiled_args: Vec<Expr>, typ: Type| -> Result<(Type, Expr), CompileError> {
+            Ok((
+                typ,
+                Expr::FuncCall {
+                    name: name.to_string(),
+                    args: compiled_args,
+                },
+            ))
+        };
+
     match name {
         // header(name: string) -> string
         "header" => {
@@ -184,7 +285,7 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     message: format!("Function 'header' expects 1 argument, got {}", args.len()),
                 });
             }
-            let arg_type = type_check(&args[0])?;
+            let (arg_type, arg_compiled) = type_check(&args[0])?;
             if arg_type != Type::Str {
                 return Err(CompileError {
                     message: format!(
@@ -193,7 +294,7 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
-            Ok(Type::Str)
+            build_func(name, vec![arg_compiled], Type::Str)
         }
 
         // headerValues(name: string) -> []string
@@ -206,7 +307,7 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
-            let arg_type = type_check(&args[0])?;
+            let (arg_type, arg_compiled) = type_check(&args[0])?;
             if arg_type != Type::Str {
                 return Err(CompileError {
                     message: format!(
@@ -215,7 +316,7 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
-            Ok(Type::StrList)
+            build_func(name, vec![arg_compiled], Type::StrList)
         }
 
         // headerList(name: string) -> []string
@@ -228,7 +329,7 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
-            let arg_type = type_check(&args[0])?;
+            let (arg_type, arg_compiled) = type_check(&args[0])?;
             if arg_type != Type::Str {
                 return Err(CompileError {
                     message: format!(
@@ -237,7 +338,7 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
-            Ok(Type::StrList)
+            build_func(name, vec![arg_compiled], Type::StrList)
         }
 
         // contains(list: []string, item: string) -> bool
@@ -251,8 +352,8 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
-            let list_type = type_check(&args[0])?;
-            let item_type = type_check(&args[1])?;
+            let (list_type, list_compiled) = type_check(&args[0])?;
+            let (item_type, item_compiled) = type_check(&args[1])?;
 
             if list_type != Type::StrList {
                 return Err(CompileError {
@@ -270,7 +371,7 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
-            Ok(Type::Bool)
+            build_func(name, vec![list_compiled, item_compiled], Type::Bool)
         }
 
         // anyOf(list: []string, items: ...string) -> bool
@@ -284,8 +385,10 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                 });
             }
 
+            let mut compiled_args = Vec::with_capacity(args.len());
+
             // First argument must be []string
-            let list_type = type_check(&args[0])?;
+            let (list_type, list_compiled) = type_check(&args[0])?;
             if list_type != Type::StrList {
                 return Err(CompileError {
                     message: format!(
@@ -294,10 +397,11 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
+            compiled_args.push(list_compiled);
 
             // Remaining arguments must be strings
             for (i, arg) in args.iter().skip(1).enumerate() {
-                let arg_type = type_check(arg)?;
+                let (arg_type, arg_compiled) = type_check(arg)?;
                 if arg_type != Type::Str {
                     return Err(CompileError {
                         message: format!(
@@ -307,9 +411,10 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                         ),
                     });
                 }
+                compiled_args.push(arg_compiled);
             }
 
-            Ok(Type::Bool)
+            build_func(name, compiled_args, Type::Bool)
         }
 
         // allOf(list: []string, items: ...string) -> bool
@@ -323,8 +428,10 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                 });
             }
 
+            let mut compiled_args = Vec::with_capacity(args.len());
+
             // First argument must be []string
-            let list_type = type_check(&args[0])?;
+            let (list_type, list_compiled) = type_check(&args[0])?;
             if list_type != Type::StrList {
                 return Err(CompileError {
                     message: format!(
@@ -333,10 +440,11 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                     ),
                 });
             }
+            compiled_args.push(list_compiled);
 
             // Remaining arguments must be strings
             for (i, arg) in args.iter().skip(1).enumerate() {
-                let arg_type = type_check(arg)?;
+                let (arg_type, arg_compiled) = type_check(arg)?;
                 if arg_type != Type::Str {
                     return Err(CompileError {
                         message: format!(
@@ -346,9 +454,10 @@ fn type_check_function(name: &str, args: &[Expr]) -> Result<Type, CompileError> 
                         ),
                     });
                 }
+                compiled_args.push(arg_compiled);
             }
 
-            Ok(Type::Bool)
+            build_func(name, compiled_args, Type::Bool)
         }
 
         _ => Err(CompileError {
@@ -435,5 +544,53 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(err.message.contains("Unknown function"));
+    }
+
+    #[test]
+    fn test_matches_requires_literal_pattern() {
+        // Dynamic patterns (e.g., from headers) must be rejected to prevent regex injection
+        let result = Program::compile(r#"matches(path, header("X-Pattern"))"#);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.message.contains("string literal"),
+            "Expected 'string literal' error, got: {}",
+            err.message
+        );
+    }
+
+    #[test]
+    fn test_matches_invalid_regex_caught_at_compile() {
+        let result = Program::compile(r#"matches(path, "[invalid")"#);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.message.contains("Invalid regex"),
+            "Expected 'Invalid regex' error, got: {}",
+            err.message
+        );
+    }
+
+    #[test]
+    fn test_matches_valid_regex_compiles() {
+        let program = Program::compile(r#"matches(path, "^/api/v[0-9]+/.*")"#).unwrap();
+        assert!(
+            matches!(program.root, Expr::RegexMatch { .. }),
+            "Expected RegexMatch, got: {:?}",
+            program.root
+        );
+    }
+
+    #[test]
+    fn test_matches_infix_dynamic_rejected() {
+        // Infix syntax with dynamic pattern must also be rejected
+        let result = Program::compile(r#"path matches header("X")"#);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            err.message.contains("string literal"),
+            "Expected 'string literal' error, got: {}",
+            err.message
+        );
     }
 }

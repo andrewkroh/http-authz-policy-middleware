@@ -6,7 +6,6 @@
 use super::ast::{BinOp, Expr, Ident};
 use super::compiler::Program;
 use crate::context::RequestContext;
-use regex::Regex;
 use std::fmt;
 
 /// Value types during evaluation
@@ -81,6 +80,16 @@ fn eval_expr(expr: &Expr, ctx: &RequestContext) -> Result<Value, EvalError> {
             eval_binop(op, left_val, right_val)
         }
 
+        Expr::RegexMatch { expr, regex } => {
+            let val = eval_expr(expr, ctx)?;
+            match val {
+                Value::Str(text) => Ok(Value::Bool(regex.regex.is_match(&text))),
+                _ => Err(EvalError {
+                    message: "RegexMatch requires string operand".to_string(),
+                }),
+            }
+        }
+
         Expr::And(left, right) => {
             let left_val = eval_expr(left, ctx)?;
             match left_val {
@@ -145,12 +154,12 @@ fn eval_binop(op: &BinOp, left: Value, right: Value) -> Result<Value, EvalError>
             Ok(Value::Bool(list.contains(&item)))
         }
 
-        (BinOp::Matches, Value::Str(text), Value::Str(pattern)) => {
-            // Compile regex and match
-            let regex = Regex::new(&pattern).map_err(|e| EvalError {
-                message: format!("Invalid regex pattern '{}': {}", pattern, e),
-            })?;
-            Ok(Value::Bool(regex.is_match(&text)))
+        (BinOp::Matches, _, _) => {
+            // The compiler transforms all `matches` expressions into `RegexMatch` nodes
+            // with pre-compiled regex patterns. This arm should never be reached.
+            Err(EvalError {
+                message: "BinOp::Matches should have been compiled to RegexMatch".to_string(),
+            })
         }
 
         _ => Err(EvalError {
@@ -438,9 +447,8 @@ mod tests {
 
     #[test]
     fn test_eval_regex_error() {
-        let program = Program::compile(r#"matches(path, "[invalid")"#).unwrap();
-        let ctx = make_context("GET", "/", "example.com");
-        let result = program.eval(&ctx);
+        // Invalid regex patterns are now caught at compile time, not evaluation time.
+        let result = Program::compile(r#"matches(path, "[invalid")"#);
         assert!(result.is_err());
         assert!(result.unwrap_err().message.contains("regex"));
     }

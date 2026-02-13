@@ -6,6 +6,10 @@
 use crate::config::TestRequest;
 use std::collections::HashMap;
 
+/// Maximum number of items returned by `header_list()` to prevent
+/// unbounded memory allocation from attacker-controlled header values.
+const MAX_HEADER_LIST_ITEMS: usize = 128;
+
 /// Context containing HTTP request attributes for expression evaluation
 #[derive(Debug, Clone)]
 pub struct RequestContext {
@@ -132,6 +136,7 @@ impl RequestContext {
             .split(',')
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
+            .take(MAX_HEADER_LIST_ITEMS)
             .collect()
     }
 }
@@ -251,5 +256,29 @@ mod tests {
 
         let list = ctx.header_list("missing");
         assert_eq!(list.len(), 0);
+    }
+
+    #[test]
+    fn test_header_list_capped_at_max() {
+        // Create a header value with 200 comma-separated items
+        let items: Vec<String> = (0..200).map(|i| format!("item{}", i)).collect();
+        let value = items.join(",");
+
+        let mut headers = HashMap::new();
+        headers.insert("X-Large".to_string(), value);
+
+        let test_req = TestRequest {
+            headers,
+            ..Default::default()
+        };
+
+        let ctx = RequestContext::from_test(&test_req);
+        let list = ctx.header_list("X-Large");
+        assert_eq!(list.len(), MAX_HEADER_LIST_ITEMS);
+        assert_eq!(list[0], "item0");
+        assert_eq!(
+            list[MAX_HEADER_LIST_ITEMS - 1],
+            format!("item{}", MAX_HEADER_LIST_ITEMS - 1)
+        );
     }
 }

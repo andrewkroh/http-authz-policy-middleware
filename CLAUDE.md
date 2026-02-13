@@ -12,6 +12,7 @@ Middleware.
 - [Build Commands](#build-commands)
 - [Testing](#testing)
 - [Integration Testing](#integration-testing)
+- [Playground](#playground)
 - [Code Quality](#code-quality)
 - [Development Workflow](#development-workflow)
 - [Performance Considerations](#performance-considerations)
@@ -62,6 +63,11 @@ expression language. The plugin:
 │   ├── dynamic.yml             # Middleware definitions with test cases
 │   ├── test.sh                 # Integration test script
 │   └── README.md               # Integration testing documentation
+├── playground/                 # Browser-based expression playground
+│   ├── index.html              # Single-page app (plain HTML)
+│   ├── app.js                  # UI logic (vanilla JS, no framework)
+│   ├── style.css               # Styles
+│   └── pkg/                    # wasm-bindgen generated bindings
 ├── examples/                   # Example Traefik configurations
 ├── scripts/
 │   └── check-license-headers.sh # License header validation
@@ -71,6 +77,7 @@ expression language. The plugin:
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml              # CI/CD pipeline
+│       ├── playground.yml      # Playground deployment to GitHub Pages
 │       └── release.yml         # Automated release workflow
 ├── Cargo.toml                  # Rust dependencies and build config
 ├── Makefile                    # Build automation
@@ -330,6 +337,35 @@ open http://127.0.0.1:8081
 ```
 
 Note: Dashboard access requires running in legacy mode with port exposure.
+
+## Playground
+
+The project includes a browser-based expression playground deployed at
+https://andrewkroh.github.io/http-authz-policy-middleware/. It lets users write
+expressions, configure mock requests, and see evaluation results without
+installing Traefik.
+
+### Architecture
+
+The playground is intentionally built with minimal dependencies to keep it simple
+and low-maintenance: plain HTML, vanilla JavaScript, and CSS — no web frameworks
+like React. The expression engine runs client-side via the same Rust code
+compiled to `wasm32-unknown-unknown` using `wasm-bindgen`.
+
+### Building Locally
+
+```bash
+make playground
+```
+
+This compiles the Rust code to `wasm32-unknown-unknown`, runs `wasm-bindgen` to
+generate JavaScript bindings, and places the output in `playground/pkg/`.
+
+### Deployment
+
+The playground is automatically deployed to GitHub Pages on every push to
+`main` via the `.github/workflows/playground.yml` workflow. No manual deployment
+steps are needed.
 
 ## Code Quality
 

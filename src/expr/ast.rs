@@ -3,7 +3,33 @@
 
 // Abstract Syntax Tree (AST) for the expression language
 
+use regex::Regex;
 use std::fmt;
+
+/// A pre-compiled regex pattern wrapper.
+///
+/// This type wraps `regex::Regex` to allow it to be used inside `Expr`,
+/// which derives `PartialEq`. Since `Regex` does not implement `PartialEq`,
+/// we compare by the pattern string.
+#[derive(Debug, Clone)]
+pub struct CompiledRegex {
+    pub regex: Regex,
+}
+
+impl CompiledRegex {
+    /// Create a new CompiledRegex from a pattern string.
+    pub fn new(pattern: &str) -> Result<Self, regex::Error> {
+        Ok(CompiledRegex {
+            regex: Regex::new(pattern)?,
+        })
+    }
+}
+
+impl PartialEq for CompiledRegex {
+    fn eq(&self, other: &Self) -> bool {
+        self.regex.as_str() == other.regex.as_str()
+    }
+}
 
 /// Expression AST node
 #[derive(Debug, Clone, PartialEq)]
@@ -25,6 +51,12 @@ pub enum Expr {
         op: BinOp,
         left: Box<Expr>,
         right: Box<Expr>,
+    },
+
+    /// Pre-compiled regex match (produced by the compiler from `matches` expressions)
+    RegexMatch {
+        expr: Box<Expr>,
+        regex: CompiledRegex,
     },
 
     /// NOT expression
@@ -55,6 +87,9 @@ impl fmt::Display for Expr {
             }
             Expr::BinaryOp { op, left, right } => {
                 write!(f, "({} {} {})", left, op, right)
+            }
+            Expr::RegexMatch { expr, regex } => {
+                write!(f, "({} matches \"{}\")", expr, regex.regex.as_str())
             }
             Expr::Not(expr) => write!(f, "(NOT {})", expr),
             Expr::And(left, right) => write!(f, "({} AND {})", left, right),
