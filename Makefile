@@ -1,4 +1,4 @@
-.PHONY: build test clean release check check-license release-notes
+.PHONY: build test clean release check check-license release-notes playground
 
 build:
 	cargo build --target wasm32-wasip1
@@ -28,6 +28,18 @@ check:
 
 check-license:
 	@./scripts/check-license-headers.sh
+
+playground:
+	cargo build --target wasm32-unknown-unknown --release --no-default-features --features playground
+	wasm-bindgen target/wasm32-unknown-unknown/release/traefik_authz_wasm.wasm --out-dir playground/pkg --target web --no-typescript
+	cp docs/authz-ferris.png playground/authz-ferris.png
+	@if command -v wasm-opt > /dev/null 2>&1; then \
+		echo "Optimizing playground WASM with wasm-opt..."; \
+		wasm-opt -Oz --enable-bulk-memory playground/pkg/traefik_authz_wasm_bg.wasm -o playground/pkg/traefik_authz_wasm_bg.wasm; \
+	else \
+		echo "wasm-opt not found, skipping optimization"; \
+	fi
+	@ls -lh playground/pkg/traefik_authz_wasm_bg.wasm
 
 release-notes:
 	git cliff --unreleased --strip all

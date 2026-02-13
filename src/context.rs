@@ -29,7 +29,7 @@ pub struct RequestContext {
 
 impl RequestContext {
     /// Create a RequestContext from an http-wasm Request
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_arch = "wasm32", feature = "traefik-plugin"))]
     pub fn from_request(request: &http_wasm_guest::Request) -> Self {
         let mut headers = HashMap::new();
         let mut all_headers = HashMap::new();

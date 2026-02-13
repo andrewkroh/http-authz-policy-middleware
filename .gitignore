@@ -6,6 +6,8 @@ Cargo.lock
 
 # WASM output
 plugin.wasm
+playground/pkg/
+playground/authz-ferris.png
 integration-test/plugins-local/
 
 # IDE

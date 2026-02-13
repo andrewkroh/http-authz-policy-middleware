@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expression Playground - HTTP AuthZ Policy Middleware</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="header-left">
+                <img src="authz-ferris.png" alt="AuthZ Ferris logo" class="header-logo">
+                <div>
+                    <h1>HTTP AuthZ Policy Middleware</h1>
+                    <p class="subtitle">Expression Playground</p>
+                </div>
+            </div>
+            <a href="https://github.com/andrewkroh/http-authz-policy-middleware" class="github-link" target="_blank" rel="noopener">
+                <svg viewBox="0 0 16 16" width="24" height="24" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                GitHub
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div class="editor-grid">
+            <section class="expression-section">
+                <label for="expression">Expression</label>
+                <textarea id="expression" spellcheck="false" placeholder='e.g. contains(headerList("X-Auth-User-Teams"), "platform-eng")'>contains(headerList("X-Auth-User-Teams"), "platform-eng")</textarea>
+                <div id="compile-status" class="compile-status"></div>
+            </section>
+
+            <section class="request-section">
+                <label>Test Request</label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="method" class="small-label">Method</label>
+                        <select id="method">
+                            <option value="GET" selected>GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="PATCH">PATCH</option>
+                            <option value="DELETE">DELETE</option>
+                            <option value="HEAD">HEAD</option>
+                            <option value="OPTIONS">OPTIONS</option>
+                        </select>
+                    </div>
+                    <div class="form-group flex-grow">
+                        <label for="path" class="small-label">Path</label>
+                        <input type="text" id="path" value="/api/v1/resources" placeholder="/path">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-grow">
+                        <label for="host" class="small-label">Host</label>
+                        <input type="text" id="host" value="api.example.com" placeholder="example.com">
+                    </div>
+                </div>
+
+                <div class="headers-section">
+                    <div class="headers-label">
+                        <label class="small-label">Headers</label>
+                        <button type="button" id="add-header" class="btn-small">+ Add</button>
+                    </div>
+                    <div id="headers-list">
+                        <div class="header-row" data-index="0">
+                            <input type="text" class="header-key" value="X-Auth-User-Teams" placeholder="Header name">
+                            <input type="text" class="header-value" value="platform-eng,devops,sre" placeholder="Value">
+                            <button type="button" class="btn-remove" title="Remove header">&times;</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="evaluate-bar">
+            <button type="button" id="evaluate-btn" disabled>Evaluate</button>
+            <span class="shortcut-hint">Ctrl+Enter</span>
+        </div>
+
+        <div id="result-panel" class="result-panel hidden"></div>
+
+        <details class="reference">
+            <summary>Expression Language Reference</summary>
+            <div class="reference-content">
+                <div class="ref-columns">
+                    <div>
+                        <h3>Identifiers</h3>
+                        <table>
+                            <tr><td><code>method</code></td><td>HTTP method (GET, POST, ...)</td></tr>
+                            <tr><td><code>path</code></td><td>Request path</td></tr>
+                            <tr><td><code>host</code></td><td>Request host</td></tr>
+                        </table>
+
+                        <h3>Operators</h3>
+                        <table>
+                            <tr><td><code>==</code></td><td>Equal (string)</td></tr>
+                            <tr><td><code>!=</code></td><td>Not equal (string)</td></tr>
+                            <tr><td><code>startsWith</code></td><td>String prefix match</td></tr>
+                            <tr><td><code>endsWith</code></td><td>String suffix match</td></tr>
+                            <tr><td><code>matches</code></td><td>Regex match</td></tr>
+                            <tr><td><code>contains</code></td><td>List contains string</td></tr>
+                            <tr><td><code>AND</code></td><td>Logical AND</td></tr>
+                            <tr><td><code>OR</code></td><td>Logical OR</td></tr>
+                            <tr><td><code>NOT</code></td><td>Logical NOT</td></tr>
+                        </table>
+                    </div>
+                    <div>
+                        <h3>Functions</h3>
+                        <table>
+                            <tr><td><code>header(name)</code></td><td>First header value (string)</td></tr>
+                            <tr><td><code>headerValues(name)</code></td><td>All header values ([]string)</td></tr>
+                            <tr><td><code>headerList(name)</code></td><td>Comma-split header ([]string)</td></tr>
+                            <tr><td><code>contains(list, item)</code></td><td>List contains item (bool)</td></tr>
+                            <tr><td><code>anyOf(list, items...)</code></td><td>List has any of items (bool)</td></tr>
+                            <tr><td><code>allOf(list, items...)</code></td><td>List has all items (bool)</td></tr>
+                            <tr><td><code>matches(str, regex)</code></td><td>Regex match (bool)</td></tr>
+                        </table>
+
+                        <h3>Examples</h3>
+                        <pre><code>method == "GET" AND path startsWith "/api"
+
+contains(headerList("X-Teams"), "platform-eng")
+
+anyOf(headerList("X-Roles"), "admin", "editor")
+
+matches(path, "^/api/v[0-9]+/.*")</code></pre>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </main>
+
+    <footer>
+        <span>Copyright <span id="copyright-year"></span> Andrew Kroh</span>
+        <span class="footer-sep" aria-hidden="true">&middot;</span>
+        <span>MIT License</span>
+        <span class="footer-sep" aria-hidden="true">&middot;</span>
+        <span>Commit <a id="commit-link" href="#">COMMIT_SHA_SHORT</a></span>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

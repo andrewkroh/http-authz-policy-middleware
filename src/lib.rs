@@ -10,7 +10,10 @@ pub mod config;
 pub mod context;
 pub mod expr;
 
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "playground")]
+pub mod playground;
+
+#[cfg(all(target_arch = "wasm32", feature = "traefik-plugin"))]
 mod plugin {
     use crate::config::Config;
     use crate::context::RequestContext;
