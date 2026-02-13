@@ -29,13 +29,11 @@ Pattern: `vMAJOR.MINOR.PATCH`
 
 ## Release Artifacts
 
-Each release includes:
+Each release includes a single artifact:
 
 | File | Description |
 |------|-------------|
-| `http-authz-policy-middleware-vX.Y.Z.zip` | Plugin package for Traefik catalog |
-| `plugin.wasm` | Compiled WASM binary |
-| `.traefik.yml` | Plugin manifest |
+| `http-authz-policy-middleware-vX.Y.Z.zip` | Plugin package (plugin.wasm, .traefik.yml, LICENSE) |
 
 ## Versioning
 

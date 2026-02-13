@@ -663,26 +663,25 @@ After the release workflow completes:
 
 ### Release Artifacts
 
-Each release includes these artifacts:
+Each release includes a single artifact:
 
 | Artifact | Description | Use Case |
 |----------|-------------|----------|
-| `http-authz-policy-middleware-vX.Y.Z.zip` | Complete plugin package | Submit to Traefik Plugin Catalog |
-| `plugin.wasm` | Compiled WASM binary | Direct use in Traefik |
-| `.traefik.yml` | Plugin manifest | Required metadata |
+| `http-authz-policy-middleware-vX.Y.Z.zip` | Plugin package (plugin.wasm, .traefik.yml, LICENSE) | Submit to Traefik Plugin Catalog or direct use |
 
 ### Traefik Plugin Catalog Submission
 
 To submit your plugin to the Traefik Plugin Catalog:
 
 1. **Download the release ZIP** from GitHub Releases
-2. **Extract and verify** contents (plugin.wasm + .traefik.yml)
+2. **Extract and verify** contents (plugin.wasm, .traefik.yml, LICENSE)
 3. **Tag your repository** with `traefik-plugin` topic on GitHub
 4. **Follow Traefik's plugin submission process**
 
 The ZIP archive format matches Traefik's requirements:
 - Contains `plugin.wasm` (default WASM file name)
 - Contains `.traefik.yml` (plugin manifest)
+- Contains `LICENSE` (MIT license text)
 - Ready for catalog submission
 
 ### Versioning Strategy
