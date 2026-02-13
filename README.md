@@ -34,7 +34,9 @@ experimental:
       version: v0.0.3
 ```
 
-Traefik will download the plugin from the [Plugin Catalog](https://plugins.traefik.io/) on startup.
+Traefik will download the plugin from
+the [Plugin Catalog](https://plugins.traefik.io/plugins/698edb5ca6a1a500838f3b8b/http-authorization-policy-middleware)
+on startup.
 
 ## Quick Start
 
