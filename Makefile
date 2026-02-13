@@ -1,4 +1,4 @@
-.PHONY: build test clean release check check-license
+.PHONY: build test clean release check check-license release-notes
 
 build:
 	cargo build --target wasm32-wasip1
@@ -28,3 +28,6 @@ check:
 
 check-license:
 	@./scripts/check-license-headers.sh
+
+release-notes:
+	git cliff --unreleased --strip all

@@ -1,6 +1,7 @@
 # Contributing to HTTP Authorization Policy Middleware
 
-Thank you for your interest in contributing! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing! This document provides guidelines
+for contributing to the project.
 
 ## Table of Contents
 
@@ -14,7 +15,8 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ## Code of Conduct
 
-This project follows a professional and respectful code of conduct. Please be kind and constructive in all interactions.
+This project follows a professional and respectful code of conduct. Please be
+kind and constructive in all interactions.
 
 ## Getting Started
 
@@ -68,7 +70,8 @@ This project follows a professional and respectful code of conduct. Please be ki
 
 ## Commit Message Guidelines
 
-This project uses **Conventional Commits** for automatic release notes generation. All commit messages must follow this format:
+This project uses **Conventional Commits** for automatic release notes
+generation. All commit messages must follow this format:
 
 ```
 <type>(<scope>): <subject>
@@ -286,7 +289,9 @@ Update these files for developer workflow changes:
 
 ### For Maintainers
 
-Releases are automated via GitHub Actions when version tags are pushed. See [CLAUDE.md - Release Process](CLAUDE.md#release-process) for complete instructions.
+Releases are automated via GitHub Actions when version tags are pushed.
+See [CLAUDE.md - Release Process](CLAUDE.md#release-process) for complete
+instructions.
 
 **Quick Release Steps:**
 1. Ensure all tests pass and commits follow conventional format
@@ -310,7 +315,8 @@ Contributors do not create releases. Maintainers will:
 - Include changes in the next release
 - Credit you in the release notes (based on git commits)
 
-Your commit messages following conventional commit format ensure your contributions are properly documented in release notes.
+Your commit messages following conventional commit format ensure your
+contributions are properly documented in release notes.
 
 ## Questions?
 
