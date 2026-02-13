@@ -1,5 +1,5 @@
 # Lightweight test container with curl
-FROM alpine:3.19
+FROM alpine:3.23
 
 # Install curl for HTTP testing
 RUN apk add --no-cache curl bash

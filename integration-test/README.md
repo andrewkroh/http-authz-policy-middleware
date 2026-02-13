@@ -1,6 +1,7 @@
 # Docker-Based Traefik Integration Tests
 
-This directory contains end-to-end integration tests that validate the plugin in a real Traefik environment.
+This directory contains end-to-end integration tests that validate the plugin in
+a real Traefik environment.
 
 ## Prerequisites
 
@@ -9,9 +10,7 @@ This directory contains end-to-end integration tests that validate the plugin in
 
 ## Running the Tests
 
-### Recommended: Hardened Mode (Tests Run Inside Docker Network)
-
-This is the secure way to run tests - tests execute inside the Docker network without exposing ports to the host:
+The tests execute inside the Docker network without exposing ports to the host.
 
 1. **Build the release binary** (from project root):
    ```bash
@@ -30,52 +29,6 @@ This script will:
 - Start Traefik and backend services
 - Run tests inside the Docker network (using service names)
 - Display results and clean up
-
-### Alternative: Legacy Mode (Tests Run From Host)
-
-For debugging or if you need to access Traefik from your host:
-
-1. **Build the release binary** (from project root):
-   ```bash
-   make release
-   ```
-
-2. **Set up the plugin directory**:
-   ```bash
-   cd integration-test
-   ./setup-plugin.sh
-   ```
-
-3. **Start services** (ports bound to 127.0.0.1 only):
-   ```bash
-   docker compose up -d traefik backend
-   ```
-
-4. **Run tests from host**:
-   ```bash
-   TRAEFIK_URL=http://localhost:8080 ./test.sh
-   ```
-
-5. **View Traefik logs** (to see plugin initialization):
-   ```bash
-   docker compose logs traefik
-   ```
-
-6. **Clean up**:
-   ```bash
-   docker compose down
-   ```
-
-Note: In legacy mode, ports are bound to 127.0.0.1:8080 and 127.0.0.1:8081 (not 0.0.0.0) for security.
-
-## Security Improvements
-
-The integration test suite has been hardened with the following security measures:
-
-1. **Network Isolation** - Tests run inside Docker network, not from host
-2. **Restricted Port Exposure** - Ports bound to 127.0.0.1 only (not 0.0.0.0)
-3. **No Host Port Dependencies** - Tests use internal service names (traefik:80)
-4. **Health Checks** - Proper service dependency management with health checks
 
 ## What Gets Tested
 
@@ -134,50 +87,6 @@ The `setup-plugin.sh` script creates this structure and copies the built
 - Ensure Traefik is fully started before running tests
 - Check Traefik logs for plugin errors: `docker compose logs traefik`
 - Verify plugin loaded successfully (look for middleware creation in logs)
-
-### Port conflicts
-- Ports bound to 127.0.0.1:8080 (HTTP) and 127.0.0.1:8081 (Dashboard)
-- Use hardened mode (run-tests.sh) to avoid port binding altogether
-- Modify ports in docker-compose.yml if needed for legacy mode
-
-## Traefik Dashboard
-
-When running in legacy mode with port exposure, access Traefik dashboard at: http://127.0.0.1:8081
-
-View middlewares, routers, and services configuration.
-
-Note: Dashboard is not accessible in hardened mode (tests run inside Docker network).
-
-## GitHub Actions Integration
-
-The integration tests can be run in CI/CD using the hardened mode:
-
-```yaml
-- name: Build release WASM
-  run: make release
-
-- name: Run integration tests
-  run: |
-    cd integration-test
-    ./run-tests.sh
-```
-
-Or using the legacy approach for more control:
-
-```yaml
-- name: Build release WASM
-  run: make release
-
-- name: Run integration tests
-  run: |
-    cd integration-test
-    ./setup-plugin.sh
-    docker compose up -d traefik backend
-    sleep 10  # Wait for Traefik startup
-    TRAEFIK_URL=http://localhost:8080 ./test.sh
-    docker compose logs traefik
-    docker compose down
-```
 
 ## Notes
 
