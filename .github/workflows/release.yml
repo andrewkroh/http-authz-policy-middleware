@@ -57,7 +57,7 @@ jobs:
       - uses: ./.github/actions/install-wasm-opt
 
       - name: Install git-cliff
-        run: cargo install git-cliff
+        run: command -v git-cliff || cargo install git-cliff
 
       - name: Run quality checks
         run: make check
