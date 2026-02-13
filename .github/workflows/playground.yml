@@ -53,7 +53,7 @@ jobs:
           sed -i "s/COMMIT_SHA_SHORT/${SHORT_SHA}/g" playground/index.html
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: playground
 
