@@ -84,7 +84,7 @@ jobs:
           key: ${{ runner.os }}-cargo-playground-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install wasm-bindgen-cli
-        run: cargo install wasm-bindgen-cli@0.2.100 --locked --force
+        run: cargo install wasm-bindgen-cli@0.2.108 --locked --force
 
       - name: Build playground WASM
         run: make playground
