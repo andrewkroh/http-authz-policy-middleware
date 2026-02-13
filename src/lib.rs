@@ -15,7 +15,7 @@ mod plugin {
     use crate::config::Config;
     use crate::context::RequestContext;
     use crate::expr::compiler::Program;
-    use http_wasm_guest::{host, Guest};
+    use http_wasm_guest::{host, Guest, Request, Response};
 
     /// Authorization plugin implementation
     pub struct AuthzPlugin {
@@ -24,7 +24,7 @@ mod plugin {
     }
 
     impl Guest for AuthzPlugin {
-        fn handle_request(&self, request: host::Request, response: host::Response) -> (bool, i32) {
+        fn handle_request(&self, request: Request, response: Response) -> (bool, i32) {
             // Build RequestContext from http-wasm Request
             let ctx = RequestContext::from_request(&request);
 

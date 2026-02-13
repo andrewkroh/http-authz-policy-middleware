@@ -30,24 +30,24 @@ pub struct RequestContext {
 impl RequestContext {
     /// Create a RequestContext from an http-wasm Request
     #[cfg(target_arch = "wasm32")]
-    pub fn from_request(request: &http_wasm_guest::host::Request) -> Self {
+    pub fn from_request(request: &http_wasm_guest::Request) -> Self {
         let mut headers = HashMap::new();
         let mut all_headers = HashMap::new();
 
-        // Extract method
-        let method = String::from_utf8_lossy(&request.method()).to_string();
+        // Extract method (returns Bytes)
+        let method = request.method().to_str().unwrap_or("").to_string();
 
-        // Extract URI
-        let uri = String::from_utf8_lossy(&request.uri()).to_string();
+        // Extract URI (returns Bytes)
+        let uri = request.uri().to_str().unwrap_or("").to_string();
         let path = uri.split('?').next().unwrap_or(&uri).to_string();
 
-        // Extract all headers
+        // Extract all headers (Header trait returns HashMap<Bytes, Vec<Bytes>>)
         let all = request.header().get();
         for (name_bytes, values_bytes) in &all {
-            let name = String::from_utf8_lossy(name_bytes).to_lowercase();
+            let name = name_bytes.to_str().unwrap_or("").to_lowercase();
             let values: Vec<String> = values_bytes
                 .iter()
-                .map(|v| String::from_utf8_lossy(v).to_string())
+                .map(|v| v.to_str().unwrap_or("").to_string())
                 .collect();
 
             if let Some(first) = values.first() {
