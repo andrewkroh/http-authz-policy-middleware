@@ -1,0 +1,18 @@
+name: Install wasm-opt
+description: Download a pre-built wasm-opt binary from binaryen releases.
+
+inputs:
+  version:
+    description: Binaryen release tag (e.g., version_121)
+    required: false
+    default: version_121
+
+runs:
+  using: composite
+  steps:
+    - name: Install wasm-opt
+      shell: bash
+      run: |
+        curl -sSL "https://github.com/WebAssembly/binaryen/releases/download/${{ inputs.version }}/binaryen-${{ inputs.version }}-x86_64-linux.tar.gz" \
+          | tar -xz --strip-components=2 -C /usr/local/bin/ "binaryen-${{ inputs.version }}/bin/wasm-opt"
+        echo "Installed $(wasm-opt --version)"

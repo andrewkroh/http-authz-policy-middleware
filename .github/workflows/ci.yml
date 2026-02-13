@@ -53,10 +53,7 @@ jobs:
       - name: Run tests
         run: cargo test
 
-      - name: Install wasm-opt
-        run: |
-          echo "Installing wasm-opt for binary optimization..."
-          cargo install wasm-opt
+      - uses: ./.github/actions/install-wasm-opt
 
       - name: Build release
         run: make release
@@ -101,10 +98,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Install wasm-opt
-        run: |
-          echo "Installing wasm-opt for binary optimization..."
-          cargo install wasm-opt
+      - uses: ./.github/actions/install-wasm-opt
 
       - name: Build release WASM
         run: make release
