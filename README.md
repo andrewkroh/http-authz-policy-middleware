@@ -17,6 +17,10 @@ This plugin enables fine-grained access control based on HTTP request attributes
 - Case-insensitive header lookups
 - Minimal overhead (compiled WASM)
 
+## Playground
+
+Try the expression language in your browser at the [online playground](https://andrewkroh.github.io/http-authz-policy-middleware/). You can write expressions, configure mock requests, and see evaluation results instantly — no Traefik installation required.
+
 ## Quick Start
 
 ```yaml
