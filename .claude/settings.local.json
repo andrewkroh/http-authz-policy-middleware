@@ -4,11 +4,24 @@
   },
   "permissions": {
     "allow": [
-      "mcp__github__get_file_contents",
+      "Bash(cargo:*)",
+      "Bash(rustup:*)",
+      "Bash(make:*)",
       "Bash(docker compose:*)",
-      "Bash(cargo test:*)",
-      "Bash(find:*)",
-      "Bash(make release:*)"
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git cliff:*)",
+      "Bash(gh:*)",
+      "Bash(wasm-opt:*)",
+      "Bash(ls:*)",
+      "Bash(./integration-test/run-tests.sh:*)",
+      "Bash(./integration-test/setup-plugin.sh:*)",
+      "Bash(./integration-test/test.sh:*)",
+      "Bash(./scripts/check-license-headers.sh:*)"
     ]
   }
 }
