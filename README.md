@@ -31,7 +31,7 @@ experimental:
   plugins:
     http-authz-policy-middleware:
       moduleName: github.com/andrewkroh/http-authz-policy-middleware
-      version: v0.0.2
+      version: v0.0.3
 ```
 
 Traefik will download the plugin from the [Plugin Catalog](https://plugins.traefik.io/) on startup.
