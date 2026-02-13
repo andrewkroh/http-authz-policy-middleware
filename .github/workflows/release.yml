@@ -103,17 +103,17 @@ jobs:
             git push origin main
           fi
 
-      - name: Create and push tag
-        run: |
-          git tag "$VERSION"
-          git push origin "$VERSION"
-
       - name: Generate release notes
         run: |
           echo "Generating release notes for $VERSION..."
           git cliff --tag "$VERSION" --unreleased --strip all > release-notes.md
           echo "=== Release Notes Preview ==="
           cat release-notes.md
+
+      - name: Create and push tag
+        run: |
+          git tag "$VERSION"
+          git push origin "$VERSION"
 
       - name: Package plugin for Traefik catalog
         run: |
