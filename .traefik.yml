@@ -1,6 +1,7 @@
 displayName: HTTP Authorization Policy Middleware
 type: middleware
 runtime: wasm
+iconPath: docs/authz-ferris.png
 summary: >-
   Attribute-based authorization middleware that evaluates custom expressions
   against HTTP request properties (method, path, host, headers). Features a
@@ -11,3 +12,12 @@ testData:
   expression: 'method == "GET" AND path startsWith "/api"'
   denyStatusCode: 403
   denyBody: "Access denied"
+  tests:
+    - name: "GET /api request is allowed"
+      request:
+        method: GET
+        path: /api/v1/resource
+        host: example.com
+        headers:
+          Authorization: "Bearer token123"
+      expect: true
